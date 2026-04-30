@@ -131,7 +131,7 @@ img { display: block; }
   margin: 0 auto;
   padding: 9rem 5rem 7rem;
   display: grid;
-  grid-template-columns: 48% 1fr;
+  grid-template-columns: 55% 1fr;
   gap: 4rem;
   align-items: center;
 }
@@ -157,8 +157,8 @@ img { display: block; }
 .hero-slides {
   position: relative;
   width: 100%;
-  max-width: 520px;
-  height: 480px;
+  max-width: 380px;
+  height: 560px;
 }
 
 .hero-slide {
