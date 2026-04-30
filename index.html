@@ -18,12 +18,15 @@
 ════════════════════════════════════════════════════ -->
 <nav class="nav">
   <div class="nav-logo">Tu Doan Minh</div>
-  <ul class="nav-links">
+  <ul class="nav-links" id="nav-links">
     <li><a href="#expertise">Expertise</a></li>
     <li><a href="#skills">Skills</a></li>
     <li><a href="#blog">Blog</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <!-- ═══════════════════════════════════════════════════
@@ -35,7 +38,10 @@
   <div class="orb orb-3"></div>
 
   <div class="hero-inner">
-    <div class="hero-eyebrow">Nha Trang, Việt Nam</div>
+    <div class="avail-badge">
+      <span class="avail-dot"></span>
+      Open to new projects
+    </div>
 
     <h1 class="hero-name">Tu Doan<br>Minh</h1>
 
@@ -44,9 +50,9 @@
     </div>
 
     <p class="hero-desc">
-      Building intelligent, cloud-native platforms at scale —
-      bridging AI strategy with robust DevOps culture,
-      automation, and security engineering.
+      Tôi giúp các team xây dựng hệ thống AI và cloud infrastructure
+      đủ vững để scale, đủ đơn giản để maintain lâu dài —
+      từ Nha Trang, Việt Nam.
     </p>
 
     <div class="hero-cta">
@@ -83,6 +89,65 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════
+     ABOUT
+════════════════════════════════════════════════════ -->
+<div id="about">
+  <div class="section">
+    <div class="about-grid">
+
+      <div class="about-text fade-up">
+        <div class="section-label">About</div>
+        <h2 class="section-title">Chào, tôi là Tu —<br>
+          <span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Cloud &amp; AI Engineer</span>
+        </h2>
+        <p class="about-p">
+          Tôi bắt đầu với Linux server năm 2018, rồi bị cuốn vào cloud khi AWS ra Availability Zone tại Singapore.
+          6 năm sau, tôi đã deploy infrastructure cho hàng chục sản phẩm — từ startup 5 người đến hệ thống
+          phục vụ hàng triệu users.
+        </p>
+        <p class="about-p">
+          Từ 2024, tôi tập trung vào AI Engineering — không phải research mà là
+          <em>đưa AI vào production thực sự</em>: RAG pipelines, MLOps platforms, LLM integration.
+          Kết hợp với nền tảng cloud/DevOps, đây là thứ tôi làm tốt nhất.
+        </p>
+        <div class="about-tags">
+          <span class="about-tag">📍 Nha Trang, VN</span>
+          <span class="about-tag">🇻🇳 Tiếng Việt</span>
+          <span class="about-tag">🌐 English</span>
+          <span class="about-tag">☁️ Remote-friendly</span>
+        </div>
+      </div>
+
+      <div class="about-cards fade-up d2">
+        <div class="about-stat-card">
+          <div class="asc-num">6+</div>
+          <div class="asc-label">Năm kinh nghiệm Cloud</div>
+          <div class="asc-sub">GCP · AWS · Azure</div>
+        </div>
+        <div class="about-stat-card">
+          <div class="asc-num">2+</div>
+          <div class="asc-label">Năm kinh nghiệm AI</div>
+          <div class="asc-sub">LLMs · MLOps · RAG</div>
+        </div>
+        <div class="about-stat-card">
+          <div class="asc-num">50+</div>
+          <div class="asc-label">Projects đã deliver</div>
+          <div class="asc-sub">Production-grade systems</div>
+        </div>
+        <div class="about-avail-card">
+          <span class="avail-dot"></span>
+          <div>
+            <div style="font-size:.85rem;font-weight:600;color:var(--text)">Open to opportunities</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem">Consulting · Full-time · Remote</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
      EXPERTISE
 ════════════════════════════════════════════════════ -->
 <div id="expertise">
@@ -97,7 +162,9 @@
     <div class="cards-2x2">
 
       <div class="e-card fade-up d2">
-        <div class="e-icon">&#129302;</div>
+        <div class="e-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 014 4v1h1a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2h1V6a4 4 0 014-4z"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/><path d="M9 17h6"/><path d="M2 12h2M20 12h2"/></svg>
+        </div>
         <div class="e-title">AI Leadership &amp; Strategy</div>
         <div class="e-desc">Driving AI adoption across the organisation — from model selection and MLOps pipelines to responsible AI governance and team enablement.</div>
         <ul class="e-list">
@@ -110,7 +177,9 @@
       </div>
 
       <div class="e-card fade-up d3">
-        <div class="e-icon">&#9729;&#65039;</div>
+        <div class="e-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-.09A6 6 0 006.09 10H6a4 4 0 000 8h12a4 4 0 000-8z"/><path d="M12 15v3M9 18h6"/></svg>
+        </div>
         <div class="e-title">Cloud &amp; Infrastructure</div>
         <div class="e-desc">GitOps-driven cloud infrastructure with full automation from commit to production — fast, secure, and fully auditable across AWS, Azure, and GCP.</div>
         <ul class="e-list">
@@ -123,7 +192,9 @@
       </div>
 
       <div class="e-card fade-up d3">
-        <div class="e-icon">&#9881;&#65039;</div>
+        <div class="e-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07M8.46 8.46a5 5 0 000 7.07"/></svg>
+        </div>
         <div class="e-title">MLOps &amp; Platform Engineering</div>
         <div class="e-desc">End-to-end ML infrastructure — from training and versioning to production monitoring and automated retraining pipelines.</div>
         <ul class="e-list">
@@ -136,7 +207,9 @@
       </div>
 
       <div class="e-card fade-up d4">
-        <div class="e-icon">&#128737;&#65039;</div>
+        <div class="e-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
         <div class="e-title">DevSecOps &amp; Compliance</div>
         <div class="e-desc">Shift-left security integrated into every layer — from code and containers to network and identity, with full compliance automation.</div>
         <ul class="e-list">
@@ -444,6 +517,36 @@
   document.querySelectorAll('.fade-up').forEach(function (el) {
     obs.observe(el);
   });
+
+  // Hamburger menu
+  var ham = document.getElementById('hamburger');
+  var nav = document.getElementById('nav-links');
+  ham.addEventListener('click', function () {
+    var open = nav.classList.toggle('open');
+    ham.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
+  nav.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () {
+      nav.classList.remove('open');
+      ham.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Active nav highlight on scroll
+  var sections = document.querySelectorAll('section[id], div[id]');
+  var navAs = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', function () {
+    var scrollY = window.scrollY + 100;
+    sections.forEach(function (s) {
+      if (s.offsetTop <= scrollY && s.offsetTop + s.offsetHeight > scrollY) {
+        navAs.forEach(function (a) {
+          a.classList.toggle('nav-active', a.getAttribute('href') === '#' + s.id);
+        });
+      }
+    });
+  }, { passive: true });
 }());
 </script>
 
