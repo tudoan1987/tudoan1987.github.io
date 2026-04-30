@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shift-left Security: Tích hợp bảo mật vào CI/CD — Tu Doan Minh</title>
+  <meta name="description" content="Trivy, SonarQube, OPA và Cosign — xây dựng security gate tự động trong CI/CD pipeline.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/custom.css">
+  <link rel="icon" href="../../assets/img/cloud-icon-8.png">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../../" class="nav-logo">Tu Doan Minh</a>
+  <ul class="nav-links">
+    <li><a href="../../#expertise">Expertise</a></li>
+    <li><a href="../../#skills">Skills</a></li>
+    <li><a href="../">Blog</a></li>
+    <li><a href="../../#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<article class="post-container">
+
+  <a href="../" class="post-back">← Tất cả bài viết</a>
+
+  <header class="post-header">
+    <span class="blog-tag tag-sec">Security</span>
+    <h1 class="post-title">Shift-left Security:<br>Tích hợp bảo mật vào CI/CD Pipeline</h1>
+    <div class="post-meta-row">
+      <span>Tu Doan Minh</span>
+      <span class="blog-meta-dot"></span>
+      <span>Dec 2025</span>
+      <span class="blog-meta-dot"></span>
+      <span>9 min read</span>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>
+      Penetration test mỗi quý một lần không còn đủ. Khi team deploy 20+ lần/ngày,
+      bảo mật phải nằm trong pipeline — không phải sau nó. Đây là security pipeline
+      tôi đã build, chạy dưới 4 phút và block được 95% vulnerabilities trước khi vào production.
+    </p>
+
+    <h2>Security Gates trong CI/CD</h2>
+
+    <pre><code>Git Push
+   │
+   ▼
+① SAST — SonarQube (code vulnerabilities)
+   │  fail → block PR
+   ▼
+② Secrets Scan — Gitleaks (hardcoded credentials)
+   │  fail → block immediately + alert
+   ▼
+③ Dependency Scan — Trivy (CVE trong packages)
+   │  CRITICAL CVE → block; HIGH → warn
+   ▼
+④ Container Scan — Trivy (image vulnerabilities)
+   │  fail → block deployment
+   ▼
+⑤ IaC Scan — tfsec / Checkov (misconfigs)
+   │  fail → block PR
+   ▼
+⑥ Image Signing — Cosign (supply chain integrity)
+   │
+   ▼
+ Deploy (chỉ signed images mới được admit)</code></pre>
+
+    <h2>① SAST với SonarQube</h2>
+
+    <pre><code># .github/workflows/security.yml
+- name: SonarQube Scan
+  uses: SonarSource/sonarqube-scan-action@v3
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+- name: Quality Gate Check
+  uses: SonarSource/sonarqube-quality-gate-action@v1
+  with:
+    scanMetadataReportFile: .scannerwork/report-task.txt
+  # Fail nếu: new bugs > 0, new vulnerabilities > 0,
+  #           new code coverage < 80%</code></pre>
+
+    <h2>② Secrets Scanning với Gitleaks</h2>
+
+    <p>
+      Gitleaks scan toàn bộ git history, không chỉ commit mới nhất:
+    </p>
+
+    <pre><code>- name: Gitleaks Secret Scan
+  uses: gitleaks/gitleaks-action@v2
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}</code></pre>
+
+    <p>
+      Nếu phát hiện secret đã commit: rotate ngay lập tức, sau đó mới xử lý git history.
+      Đừng bao giờ nghĩ rằng "xóa commit là xong" — secret đã leak rồi.
+    </p>
+
+    <blockquote>
+      Trong 2 năm qua tôi đã thấy 3 incident từ hardcoded AWS keys. Cả 3 đều phát hiện sau khi
+      key đã bị abuse. Gitleaks pre-commit hook ngăn được điều này từ đầu.
+    </blockquote>
+
+    <h2>③④ Container Scanning với Trivy</h2>
+
+    <pre><code>- name: Build Image
+  run: docker build -t app:${{ github.sha }} .
+
+- name: Trivy — Filesystem Scan (dependencies)
+  uses: aquasecurity/trivy-action@master
+  with:
+    scan-type: fs
+    scan-ref: .
+    severity: CRITICAL,HIGH
+    exit-code: 1           # fail CI nếu có CRITICAL
+    ignore-unfixed: true   # bỏ qua CVE chưa có fix
+
+- name: Trivy — Image Scan
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: app:${{ github.sha }}
+    severity: CRITICAL
+    exit-code: 1
+    format: sarif
+    output: trivy-results.sarif
+
+- name: Upload to GitHub Security tab
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: trivy-results.sarif</code></pre>
+
+    <h2>⑥ Image Signing với Cosign</h2>
+
+    <p>
+      Chỉ images đã được sign mới được deploy — enforce bởi OPA Gatekeeper trên Kubernetes:
+    </p>
+
+    <pre><code># Sign sau khi push lên registry
+- name: Sign Container Image
+  run: |
+    cosign sign --yes \
+      --key env://COSIGN_PRIVATE_KEY \
+      ${{ env.REGISTRY }}/app@${{ steps.build.outputs.digest }}
+  env:
+    COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+    COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}</code></pre>
+
+    <pre><code># OPA Gatekeeper policy — chỉ admit signed images
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: RequireSignedImages
+metadata:
+  name: require-signed-images
+spec:
+  match:
+    kinds:
+    - apiGroups: [""]
+      kinds: ["Pod"]
+    namespaces: ["production", "staging"]
+  parameters:
+    publicKey: "-----BEGIN PUBLIC KEY-----\n..."</code></pre>
+
+    <h2>Kết quả sau 6 tháng</h2>
+
+    <ul>
+      <li>0 CVE severity CRITICAL vào production (từ 4-5 incidents/quý trước đó)</li>
+      <li>Pipeline security time: trung bình 3m 20s — không ảnh hưởng đến developer velocity</li>
+      <li>12 secrets bị chặn trước khi commit vào main branch</li>
+      <li>Supply chain attack surface giảm nhờ image signing + admission control</li>
+    </ul>
+
+    <h2>Bắt đầu từ đâu nếu chưa có gì?</h2>
+
+    <p>
+      Thứ tự ưu tiên nếu bạn đang bắt đầu từ zero:
+    </p>
+
+    <ol>
+      <li><strong>Secrets scanning</strong> — ROI cao nhất, setup nhanh nhất</li>
+      <li><strong>Dependency CVE scan</strong> — Trivy hoặc Snyk, chạy được ngay</li>
+      <li><strong>Container image scan</strong> — trước khi push lên registry</li>
+      <li><strong>SAST</strong> — cần thời gian tune rules để giảm false positives</li>
+      <li><strong>Image signing</strong> — làm sau khi 4 cái trên đã ổn định</li>
+    </ol>
+
+  </div>
+
+  <footer class="post-footer">
+    <a href="../" class="btn btn-ghost">← Bài viết khác</a>
+    <a href="../../#contact" class="btn btn-primary">Thảo luận thêm</a>
+  </footer>
+
+</article>
+
+<script>
+(function () {
+  const obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+}());
+</script>
+
+</body>
+</html>

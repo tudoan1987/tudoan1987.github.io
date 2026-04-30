@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinOps cho Multi-cloud: Giảm 40% chi phí — Tu Doan Minh</title>
+  <meta name="description" content="Chiến lược FinOps thực tế để tối ưu chi phí AWS và GCP — right-sizing, reserved instances và automation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/custom.css">
+  <link rel="icon" href="../../assets/img/cloud-icon-8.png">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../../" class="nav-logo">Tu Doan Minh</a>
+  <ul class="nav-links">
+    <li><a href="../../#expertise">Expertise</a></li>
+    <li><a href="../../#skills">Skills</a></li>
+    <li><a href="../">Blog</a></li>
+    <li><a href="../../#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<article class="post-container">
+
+  <a href="../" class="post-back">← Tất cả bài viết</a>
+
+  <header class="post-header">
+    <span class="blog-tag tag-cloud">Cloud</span>
+    <h1 class="post-title">FinOps cho Multi-cloud:<br>Giảm 40% chi phí AWS + GCP</h1>
+    <div class="post-meta-row">
+      <span>Tu Doan Minh</span>
+      <span class="blog-meta-dot"></span>
+      <span>Mar 2026</span>
+      <span class="blog-meta-dot"></span>
+      <span>6 min read</span>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>
+      Cloud bill tháng 3 vừa rồi của team tôi: <strong>giảm 41% so với tháng 12/2025</strong> — từ $28,000 xuống còn $16,500/tháng.
+      Không phải vì chúng tôi dùng ít hơn, mà vì chúng tôi cuối cùng đã làm FinOps đúng cách.
+      Đây là những gì đã thực sự tạo ra sự khác biệt.
+    </p>
+
+    <h2>Bước 1: Visibility — Bạn không thể tối ưu cái bạn không nhìn thấy</h2>
+
+    <p>
+      Trước khi cắt bất kỳ chi phí nào, phải biết tiền đang chạy đi đâu.
+      Tôi setup cost allocation với tags bắt buộc trên mọi resource:
+    </p>
+
+    <pre><code># Terraform — enforce mandatory tags
+variable "required_tags" {
+  type = map(string)
+  default = {
+    Environment = "required"
+    Team        = "required"
+    Project     = "required"
+    CostCenter  = "required"
+  }
+}
+
+resource "aws_instance" "app" {
+  # ...
+  tags = merge(var.required_tags, {
+    Name = "app-server"
+  })
+
+  lifecycle {
+    precondition {
+      condition     = length(var.required_tags) == 4
+      error_message = "All required tags must be set."
+    }
+  }
+}</code></pre>
+
+    <p>
+      Sau đó dùng <strong>AWS Cost Explorer + GCP BigQuery billing export</strong> để build dashboard Grafana
+      thống nhất — nhìn cả 2 cloud trên 1 màn hình.
+    </p>
+
+    <h2>Bước 2: Right-sizing — Quick win lớn nhất</h2>
+
+    <p>
+      Chạy AWS Compute Optimizer và GCP Recommender report, tôi phát hiện:
+    </p>
+
+    <ul>
+      <li><strong>67% EC2 instances</strong> đang over-provisioned — average CPU utilization chỉ 12%</li>
+      <li><strong>40% RDS instances</strong> dùng multi-AZ cho môi trường staging (không cần thiết)</li>
+      <li><strong>Hàng chục EBS volumes</strong> orphaned — không attach vào instance nào nhưng vẫn tính tiền</li>
+    </ul>
+
+    <p>
+      Script tìm orphaned EBS volumes:
+    </p>
+
+    <pre><code>aws ec2 describe-volumes \
+  --filters Name=status,Values=available \
+  --query 'Volumes[*].{ID:VolumeId,Size:Size,Created:CreateTime}' \
+  --output table</code></pre>
+
+    <blockquote>
+      Right-sizing EC2 và xóa orphaned resources đã tiết kiệm $4,200/tháng chỉ trong tuần đầu tiên.
+    </blockquote>
+
+    <h2>Bước 3: Reserved Instances và Savings Plans</h2>
+
+    <p>
+      Sau khi right-size xong, mới commit Reserved Instances — không làm ngược lại.
+      Nhiều team mắc lỗi mua RI cho instance type sai rồi mắc kẹt 1–3 năm.
+    </p>
+
+    <p>
+      Chiến lược của tôi:
+    </p>
+
+    <ul>
+      <li><strong>Compute Savings Plans (AWS):</strong> 60% workload ổn định → 1-year, no upfront</li>
+      <li><strong>EC2 Instance Savings Plans:</strong> Database servers → 3-year, partial upfront</li>
+      <li><strong>GCP Committed Use Discounts:</strong> GKE node pools cố định → 1-year CUD</li>
+      <li><strong>Spot/Preemptible:</strong> Batch jobs, CI/CD runners → 70-80% discount</li>
+    </ul>
+
+    <h2>Bước 4: Automated Shutdown — Dev/Staging ngoài giờ</h2>
+
+    <p>
+      Dev và staging environments không cần chạy 24/7. Tôi viết Lambda function tự động
+      stop/start theo schedule:
+    </p>
+
+    <pre><code># EventBridge rule — stop dev at 20:00, start at 08:00 weekdays
+resource "aws_cloudwatch_event_rule" "stop_dev" {
+  name                = "stop-dev-environments"
+  schedule_expression = "cron(0 13 ? * MON-FRI *)"  # 20:00 ICT
+}
+
+resource "aws_cloudwatch_event_rule" "start_dev" {
+  name                = "start-dev-environments"
+  schedule_expression = "cron(0 1 ? * MON-FRI *)"   # 08:00 ICT
+}</code></pre>
+
+    <p>
+      Kết quả: dev/staging chạy 55 giờ/tuần thay vì 168 giờ — tiết kiệm 67% chi phí cho những environment này.
+    </p>
+
+    <h2>Bước 5: FinOps Culture — Quan trọng hơn tooling</h2>
+
+    <p>
+      Tool không giải quyết được vấn đề nếu team không quan tâm đến cost.
+      Những thay đổi văn hoá tôi implement:
+    </p>
+
+    <ul>
+      <li>Weekly cost review trong sprint planning — mỗi team thấy bill của mình</li>
+      <li>Cost anomaly alerts qua Slack khi spending tăng &gt;20% trong 24h</li>
+      <li>"Cost champion" trong mỗi squad — người chịu trách nhiệm theo dõi</li>
+      <li>Budget tagging là điều kiện để merge PR infrastructure</li>
+    </ul>
+
+    <h2>Kết quả sau 3 tháng</h2>
+
+    <ul>
+      <li>AWS: -38% ($18k → $11k/tháng)</li>
+      <li>GCP: -47% ($10k → $5.3k/tháng)</li>
+      <li>Không service nào bị downgrade về performance</li>
+      <li>Engineer awareness về cost tăng rõ rệt</li>
+    </ul>
+
+    <p>
+      FinOps không phải là cắt giảm — là <strong>spending đúng chỗ</strong>.
+      Mục tiêu không phải zero cost, mà là mỗi dollar phải tạo ra value tương xứng.
+    </p>
+
+  </div>
+
+  <footer class="post-footer">
+    <a href="../" class="btn btn-ghost">← Bài viết khác</a>
+    <a href="../../#contact" class="btn btn-primary">Thảo luận thêm</a>
+  </footer>
+
+</article>
+
+<script>
+(function () {
+  const obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+}());
+</script>
+
+</body>
+</html>

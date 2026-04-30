@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Tu Doan Minh</title>
+  <meta name="description" content="Bài viết về Cloud Engineering, AI/MLOps và DevOps từ Tu Doan Minh.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/custom.css">
+  <link rel="icon" href="../assets/img/cloud-icon-8.png">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../" class="nav-logo">Tu Doan Minh</a>
+  <ul class="nav-links">
+    <li><a href="../#expertise">Expertise</a></li>
+    <li><a href="../#skills">Skills</a></li>
+    <li><a href="../#blog">Blog</a></li>
+    <li><a href="../#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="blog-hero">
+  <div class="section-label fade-up">Writing</div>
+  <h1 class="section-title fade-up d1">All Articles</h1>
+  <p class="section-sub fade-up d2">
+    Kinh nghiệm thực chiến về Cloud, AI, MLOps và DevOps —
+    viết để chia sẻ và ghi nhớ những bài học từ production.
+  </p>
+
+  <div class="blog-list-grid">
+
+    <a href="posts/rag-pipeline-gcp.html" class="blog-card fade-up d2">
+      <span class="blog-tag tag-ai">AI</span>
+      <div class="blog-title">RAG Pipeline trên GCP: Bài học từ Production</div>
+      <div class="blog-excerpt">
+        Xây dựng hệ thống Retrieval-Augmented Generation với Vertex AI, Weaviate và LangChain — những sai lầm gặp phải và cách tối ưu latency xuống dưới 800ms.
+      </div>
+      <div class="blog-meta">
+        <span>Apr 2026</span>
+        <span class="blog-meta-dot"></span>
+        <span>8 min read</span>
+      </div>
+    </a>
+
+    <a href="posts/finops-multi-cloud.html" class="blog-card fade-up d3">
+      <span class="blog-tag tag-cloud">Cloud</span>
+      <div class="blog-title">FinOps cho Multi-cloud: Giảm 40% chi phí AWS + GCP</div>
+      <div class="blog-excerpt">
+        Chiến lược tối ưu chi phí thực tế — từ right-sizing, reserved instances đến tự động hóa shutdown môi trường dev/staging ngoài giờ làm việc.
+      </div>
+      <div class="blog-meta">
+        <span>Mar 2026</span>
+        <span class="blog-meta-dot"></span>
+        <span>6 min read</span>
+      </div>
+    </a>
+
+    <a href="posts/mlops-mlflow-k8s.html" class="blog-card fade-up d4">
+      <span class="blog-tag tag-mlops">MLOps</span>
+      <div class="blog-title">MLflow + Kubernetes: MLOps Pipeline từ A đến Z</div>
+      <div class="blog-excerpt">
+        Thiết kế end-to-end ML platform — từ experiment tracking, model registry đến canary deployment và tự động rollback khi drift được phát hiện.
+      </div>
+      <div class="blog-meta">
+        <span>Feb 2026</span>
+        <span class="blog-meta-dot"></span>
+        <span>10 min read</span>
+      </div>
+    </a>
+
+    <a href="posts/terraform-multi-cloud.html" class="blog-card fade-up d3">
+      <span class="blog-tag tag-iac">IaC</span>
+      <div class="blog-title">Terraform Best Practices cho Multi-cloud Infrastructure</div>
+      <div class="blog-excerpt">
+        Module structure, remote state, workspace strategy và cách quản lý secrets an toàn khi dùng Terraform với AWS, Azure và GCP cùng lúc.
+      </div>
+      <div class="blog-meta">
+        <span>Jan 2026</span>
+        <span class="blog-meta-dot"></span>
+        <span>7 min read</span>
+      </div>
+    </a>
+
+    <a href="posts/devsecops-shift-left.html" class="blog-card fade-up d4">
+      <span class="blog-tag tag-sec">Security</span>
+      <div class="blog-title">Shift-left Security: Tích hợp bảo mật vào CI/CD Pipeline</div>
+      <div class="blog-excerpt">
+        Trivy, SonarQube, OPA và Cosign — xây dựng security gate tự động để block image có CVE trước khi vào production, không cần review thủ công.
+      </div>
+      <div class="blog-meta">
+        <span>Dec 2025</span>
+        <span class="blog-meta-dot"></span>
+        <span>9 min read</span>
+      </div>
+    </a>
+
+    <a href="posts/gitops-argocd.html" class="blog-card fade-up d5">
+      <span class="blog-tag tag-devops">DevOps</span>
+      <div class="blog-title">GitOps với ArgoCD: Deploy Kubernetes không còn lo sợ</div>
+      <div class="blog-excerpt">
+        Từ imperative kubectl apply đến declarative GitOps — cách setup ArgoCD App of Apps pattern, sync policies và automated rollback trên production cluster.
+      </div>
+      <div class="blog-meta">
+        <span>Nov 2025</span>
+        <span class="blog-meta-dot"></span>
+        <span>8 min read</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<footer>
+  <span>© 2026 Tu Doan Minh</span>
+  <span><a href="../" style="color:inherit;opacity:.6;">← Back to Portfolio</a></span>
+</footer>
+
+<script>
+(function () {
+  const obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+}());
+</script>
+
+</body>
+</html>
