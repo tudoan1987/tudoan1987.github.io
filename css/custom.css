@@ -398,8 +398,8 @@ img { display: block; }
 /* Stats row */
 .hero-stats {
   display: flex;
-  gap: 3.5rem;
-  flex-wrap: wrap;
+  gap: 2rem;
+  flex-wrap: nowrap;
 }
 .stat-num {
   display: block;
