@@ -363,6 +363,8 @@ html[lang="vi"] .lang-en { display: none; }
    Language toggle button
 ───────────────────────────────────────────────────── */
 .lang-toggle {
+  -webkit-appearance: none;
+  appearance: none;
   display: inline-flex;
   align-items: center;
   gap: 0.38rem;
@@ -379,6 +381,7 @@ html[lang="vi"] .lang-en { display: none; }
   flex-shrink: 0;
   font-family: inherit;
   white-space: nowrap;
+  outline: none;
 }
 .lang-toggle:hover {
   background: rgba(0,212,255,0.14);
