@@ -3,244 +3,177 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitOps với ArgoCD: Deploy Kubernetes không còn lo sợ — Tu Doan Minh</title>
-  <meta name="description" content="Từ imperative kubectl apply đến declarative GitOps — setup ArgoCD App of Apps, sync policies và automated rollback.">
+  <title>GitOps with ArgoCD: Fearless Kubernetes Deployments — Tu Doan Minh</title>
+  <meta name="description" content="From imperative kubectl apply to declarative GitOps — ArgoCD App of Apps, sync policies, and automated rollback.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../css/custom.css">
   <link rel="icon" href="../../assets/img/cloud-icon-8.png">
+  <script src="../../js/i18n.js"></script>
 </head>
 <body>
 
 <nav class="nav">
   <a href="../../" class="nav-logo">Tu Doan Minh</a>
-  <ul class="nav-links">
+  <ul class="nav-links" id="nav-links">
     <li><a href="../../#expertise">Expertise</a></li>
     <li><a href="../../#skills">Skills</a></li>
     <li><a href="../">Blog</a></li>
     <li><a href="../../#contact">Contact</a></li>
   </ul>
+  <div class="nav-right">
+    <button class="lang-toggle" id="lang-toggle" data-cur="vi" aria-label="Switch language"><span class="ltl">EN</span></button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
 </nav>
 
 <article class="post-container">
-
-  <a href="../" class="post-back">← Tất cả bài viết</a>
+  <a href="../" class="post-back">← <span data-vi="Tất cả bài viết" data-en="All articles">Tất cả bài viết</span></a>
 
   <header class="post-header">
     <span class="blog-tag tag-devops">DevOps</span>
-    <h1 class="post-title">GitOps với ArgoCD:<br>Deploy Kubernetes không còn lo sợ</h1>
+    <h1 class="post-title">
+      <span class="lang-vi">GitOps với ArgoCD:<br>Deploy Kubernetes không còn lo sợ</span>
+      <span class="lang-en">GitOps with ArgoCD:<br>Fearless Kubernetes Deployments</span>
+    </h1>
     <div class="post-meta-row">
-      <span>Tu Doan Minh</span>
-      <span class="blog-meta-dot"></span>
-      <span>Nov 2025</span>
-      <span class="blog-meta-dot"></span>
+      <span>Tu Doan Minh</span><span class="blog-meta-dot"></span>
+      <span>Nov 2025</span><span class="blog-meta-dot"></span>
       <span>8 min read</span>
     </div>
   </header>
 
-  <div class="post-body">
-
-    <p>
-      Trước khi dùng GitOps, mỗi lần deploy production là một sự kiện căng thẳng —
-      ai đó chạy <code>kubectl apply</code> trên laptop, không ai biết cluster đang ở trạng thái gì,
-      rollback là một mớ lệnh gõ tay trong panic. Sau khi migrate sang ArgoCD,
-      deploy trở thành boring — và đó chính xác là điều bạn muốn.
-    </p>
-
-    <h2>GitOps là gì (và không phải là gì)</h2>
-
-    <p>
-      GitOps = Git là single source of truth cho infrastructure và application state.
-      Bất kỳ thay đổi nào trên cluster đều phải đi qua Git commit — không có exception.
-    </p>
-
-    <ul>
-      <li>✅ Developer push code → CI build image → update image tag trong Git → ArgoCD sync</li>
-      <li>❌ Không ai được <code>kubectl edit</code> hay <code>helm upgrade</code> trực tiếp trên production</li>
-    </ul>
-
-    <blockquote>
-      Nếu bạn vẫn còn <code>kubectl apply -f</code> trực tiếp lên production, bạn chưa làm GitOps —
-      bạn đang làm "Git lưu file YAML".
-    </blockquote>
-
-    <h2>App of Apps Pattern</h2>
-
-    <p>
-      Thay vì tạo từng ArgoCD Application thủ công, dùng App of Apps để quản lý mọi app
-      từ một repo trung tâm:
-    </p>
-
-    <pre><code>gitops-repo/
+  <!-- Vietnamese -->
+  <div class="lang-vi">
+    <div class="post-body">
+      <p>Trước khi dùng GitOps, mỗi lần deploy production là một sự kiện căng thẳng — ai đó chạy <code>kubectl apply</code> trên laptop, không ai biết cluster đang ở trạng thái gì, rollback là một mớ lệnh gõ tay trong panic. Sau khi migrate sang ArgoCD, deploy trở thành boring — và đó chính xác là điều bạn muốn.</p>
+      <h2>GitOps là gì</h2>
+      <p>GitOps = Git là single source of truth cho infrastructure và application state. Bất kỳ thay đổi nào trên cluster đều phải đi qua Git commit.</p>
+      <ul>
+        <li>✅ Developer push code → CI build image → update image tag trong Git → ArgoCD sync</li>
+        <li>❌ Không ai được <code>kubectl edit</code> hay <code>helm upgrade</code> trực tiếp trên production</li>
+      </ul>
+      <blockquote>Nếu bạn vẫn còn <code>kubectl apply -f</code> trực tiếp lên production, bạn chưa làm GitOps — bạn đang làm "Git lưu file YAML".</blockquote>
+      <h2>App of Apps Pattern</h2>
+      <pre><code>gitops-repo/
 ├── apps/                        # App of Apps root
 │   ├── Chart.yaml
 │   ├── values-dev.yaml
-│   ├── values-staging.yaml
 │   ├── values-prod.yaml
 │   └── templates/
 │       ├── api-service.yaml
-│       ├── frontend.yaml
-│       ├── worker.yaml
-│       └── monitoring.yaml
-└── services/                    # Actual service configs
-    ├── api-service/
-    │   ├── dev/
-    │   ├── staging/
-    │   └── prod/
-    └── frontend/
-        └── ...</code></pre>
-
-    <pre><code># apps/templates/api-service.yaml
-apiVersion: argoproj.io/v1alpha1
+│       └── frontend.yaml
+└── services/
+    ├── api-service/{dev,staging,prod}/
+    └── frontend/...</code></pre>
+      <pre><code>apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: api-service-{{ .Values.environment }}
-  namespace: argocd
-  finalizers:
-  - resources-finalizer.argocd.argoproj.io
 spec:
-  project: {{ .Values.environment }}
   source:
-    repoURL: https://github.com/company/gitops-repo
-    targetRevision: HEAD
     path: services/api-service/{{ .Values.environment }}
-  destination:
-    server: {{ .Values.clusterUrl }}
-    namespace: api-service
   syncPolicy:
     automated:
-      prune: true          # xóa resources không còn trong Git
-      selfHeal: true       # auto-revert manual changes trên cluster
-    syncOptions:
-    - CreateNamespace=true
-    - PrunePropagationPolicy=foreground</code></pre>
-
-    <h2>Promotion Flow: Dev → Staging → Prod</h2>
-
-    <p>
-      CI pipeline chỉ update image tag trong Git — ArgoCD làm phần còn lại:
-    </p>
-
-    <pre><code># .github/workflows/deploy.yml
-- name: Update image tag in GitOps repo
+      prune: true       # xóa resources không còn trong Git
+      selfHeal: true    # auto-revert manual changes trên cluster</code></pre>
+      <h2>CI chỉ update Git — ArgoCD làm phần còn lại</h2>
+      <pre><code>- name: Update image tag in GitOps repo
   run: |
-    git clone https://github.com/company/gitops-repo
-    cd gitops-repo
-
-    # Dev: auto-deploy sau mỗi merge vào main
     yq e '.image.tag = "${{ github.sha }}"' \
       -i services/api-service/dev/values.yaml
-
-    git add .
-    git commit -m "chore: deploy api-service ${{ github.sha }} to dev"
-    git push
-
-    # Staging: chỉ deploy khi có tag vX.Y.Z
-    if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-      yq e '.image.tag = "${{ github.sha }}"' \
-        -i services/api-service/staging/values.yaml
-      git add . && git commit -m "chore: promote to staging" && git push
-    fi</code></pre>
-
-    <p>
-      Production promotion là manual — tạo PR vào <code>prod/</code> branch, cần 2 approvals:
-    </p>
-
-    <pre><code># Branch protection rules cho gitops-repo/prod branch:
-# - Require pull request reviews: 2
-# - Require status checks: staging-smoke-tests
-# - Restrict who can push: only release-bot + SRE team</code></pre>
-
-    <h2>Automated Rollback</h2>
-
-    <p>
-      ArgoCD không tự rollback khi app unhealthy — cần thêm logic. Tôi dùng
-      ArgoCD Notifications + custom webhook:
-    </p>
-
-    <pre><code># argocd-notifications-cm.yaml
-triggers:
-  - name: on-degraded
-    condition: app.status.health.status == 'Degraded'
-    template: rollback-on-degraded
-
-templates:
-  - name: rollback-on-degraded
-    webhook:
-      rollback-service:
-        method: POST
-        path: /rollback
-        body: |
-          {
-            "app": "{{.app.metadata.name}}",
-            "revision": "{{.app.status.sync.revision}}"
-          }</code></pre>
-
-    <pre><code># rollback-service — revert Git commit và push
-def rollback(app_name: str, failed_revision: str):
-    repo = git.Repo("gitops-repo")
-
-    # Tìm commit trước đó còn healthy
-    last_good = find_last_healthy_revision(app_name, failed_revision)
-
-    # Revert trong Git — ArgoCD sẽ sync về trạng thái đó
-    repo.git.revert(failed_revision, no_edit=True)
-    repo.remote("origin").push()
-
-    notify_slack(f"🔄 Rolled back {app_name} to {last_good[:8]}")</code></pre>
-
-    <h2>Secrets trong GitOps với Sealed Secrets</h2>
-
-    <p>
-      Secret không được commit plain text vào Git. Tôi dùng Bitnami Sealed Secrets —
-      encrypt bằng cluster public key, chỉ cluster đó mới decrypt được:
-    </p>
-
-    <pre><code># Encrypt secret trước khi commit
-kubeseal --format yaml \
+    git add . && git commit -m "chore: deploy api-service ${{ github.sha }}"
+    git push</code></pre>
+      <h2>Secrets với Sealed Secrets</h2>
+      <pre><code>kubeseal --format yaml \
   --controller-name=sealed-secrets \
-  --controller-namespace=kube-system \
   < secret.yaml > sealed-secret.yaml
+# sealed-secret.yaml an toàn để commit vào Git</code></pre>
+      <h2>Kết quả sau 1 năm</h2>
+      <ul>
+        <li>Deploy frequency tăng 3x — deploy nhiều hơn vì ít sợ hơn</li>
+        <li>MTTR từ 45 phút xuống 8 phút</li>
+        <li>Zero "surprise" cluster state — mọi thứ đều có trong Git history</li>
+        <li>Onboarding engineer mới: từ 2 tuần học deploy process xuống 2 ngày</li>
+      </ul>
+      <p>GitOps không phải tool — là văn hoá. ArgoCD chỉ là enforcement mechanism. Thứ quan trọng hơn là team đồng ý: <strong>Git là sự thật, không phải cluster.</strong></p>
+    </div>
+  </div>
 
-# sealed-secret.yaml an toàn để commit vào Git
-git add sealed-secret.yaml
-git commit -m "feat: add db credentials for api-service"</code></pre>
-
-    <h2>Kết quả sau 1 năm dùng GitOps</h2>
-
-    <ul>
-      <li>Deploy frequency tăng 3x — deploy nhiều hơn vì ít sợ hơn</li>
-      <li>MTTR (Mean Time to Recovery) từ 45 phút xuống 8 phút</li>
-      <li>Zero "surprise" cluster state — mọi thứ đều có trong Git history</li>
-      <li>Onboarding engineer mới: từ 2 tuần học deploy process xuống 2 ngày</li>
-      <li>Audit trail hoàn chỉnh — biết chính xác ai deploy gì, lúc nào, tại sao</li>
-    </ul>
-
-    <p>
-      GitOps không phải tool — là văn hoá. ArgoCD chỉ là enforcement mechanism.
-      Thứ quan trọng hơn là team đồng ý: <strong>Git là sự thật, không phải cluster.</strong>
-    </p>
-
+  <!-- English -->
+  <div class="lang-en">
+    <div class="post-body">
+      <p>Before GitOps, every production deployment was a stressful event — someone running <code>kubectl apply</code> from their laptop, nobody knowing what state the cluster was actually in, and rollback meant frantically typing commands in a panic. After migrating to ArgoCD, deployments became boring — and that's exactly what you want.</p>
+      <h2>What GitOps actually means</h2>
+      <p>GitOps = Git is the single source of truth for infrastructure and application state. Every change to the cluster must go through a Git commit.</p>
+      <ul>
+        <li>✅ Developer pushes code → CI builds image → updates image tag in Git → ArgoCD syncs</li>
+        <li>❌ Nobody runs <code>kubectl edit</code> or <code>helm upgrade</code> directly on production</li>
+      </ul>
+      <blockquote>If you're still running <code>kubectl apply -f</code> directly against production, you're not doing GitOps — you're doing "Git stores YAML files".</blockquote>
+      <h2>App of Apps pattern</h2>
+      <pre><code>gitops-repo/
+├── apps/                        # App of Apps root
+│   ├── Chart.yaml
+│   ├── values-dev.yaml
+│   ├── values-prod.yaml
+│   └── templates/
+│       ├── api-service.yaml
+│       └── frontend.yaml
+└── services/
+    ├── api-service/{dev,staging,prod}/
+    └── frontend/...</code></pre>
+      <pre><code>apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: api-service-{{ .Values.environment }}
+spec:
+  source:
+    path: services/api-service/{{ .Values.environment }}
+  syncPolicy:
+    automated:
+      prune: true       # delete resources no longer in Git
+      selfHeal: true    # auto-revert manual changes on the cluster</code></pre>
+      <h2>CI only updates Git — ArgoCD does the rest</h2>
+      <pre><code>- name: Update image tag in GitOps repo
+  run: |
+    yq e '.image.tag = "${{ github.sha }}"' \
+      -i services/api-service/dev/values.yaml
+    git add . && git commit -m "chore: deploy api-service ${{ github.sha }}"
+    git push</code></pre>
+      <h2>Secrets with Sealed Secrets</h2>
+      <pre><code>kubeseal --format yaml \
+  --controller-name=sealed-secrets \
+  < secret.yaml > sealed-secret.yaml
+# sealed-secret.yaml is safe to commit to Git</code></pre>
+      <h2>Results after one year</h2>
+      <ul>
+        <li>Deploy frequency increased 3x — teams deploy more because they fear it less</li>
+        <li>MTTR dropped from 45 minutes to 8 minutes</li>
+        <li>Zero "surprise" cluster state — everything is in Git history</li>
+        <li>New engineer onboarding: from two weeks learning the deploy process to two days</li>
+      </ul>
+      <p>GitOps isn't a tool — it's a culture. ArgoCD is just the enforcement mechanism. What matters more is the team agreement: <strong>Git is the truth, not the cluster.</strong></p>
+    </div>
   </div>
 
   <footer class="post-footer">
-    <a href="../" class="btn btn-ghost">← Bài viết khác</a>
-    <a href="../../#contact" class="btn btn-primary">Thảo luận thêm</a>
+    <a href="../" class="btn btn-ghost" data-vi="← Bài viết khác" data-en="← More articles">← Bài viết khác</a>
+    <a href="../../#contact" class="btn btn-primary" data-vi="Thảo luận thêm" data-en="Get in touch">Thảo luận thêm</a>
   </footer>
-
 </article>
 
 <script>
 (function () {
-  const obs = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
-    });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+  var ham = document.getElementById('hamburger');
+  var nav = document.getElementById('nav-links');
+  ham.addEventListener('click', function () {
+    var open = nav.classList.toggle('open');
+    ham.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
 }());
 </script>
-
 </body>
 </html>

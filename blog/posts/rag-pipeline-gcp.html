@@ -3,33 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAG Pipeline trên GCP: Bài học từ Production — Tu Doan Minh</title>
-  <meta name="description" content="Xây dựng hệ thống RAG với Vertex AI, Weaviate và LangChain trên GCP — lessons learned từ production.">
+  <title>RAG Pipeline on GCP — Tu Doan Minh</title>
+  <meta name="description" content="Building a RAG system with Vertex AI, Weaviate and LangChain — lessons from production.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../css/custom.css">
   <link rel="icon" href="../../assets/img/cloud-icon-8.png">
+  <script src="../../js/i18n.js"></script>
 </head>
 <body>
 
 <nav class="nav">
   <a href="../../" class="nav-logo">Tu Doan Minh</a>
-  <ul class="nav-links">
+  <ul class="nav-links" id="nav-links">
     <li><a href="../../#expertise">Expertise</a></li>
     <li><a href="../../#skills">Skills</a></li>
     <li><a href="../">Blog</a></li>
     <li><a href="../../#contact">Contact</a></li>
   </ul>
+  <div class="nav-right">
+    <button class="lang-toggle" id="lang-toggle" data-cur="vi" aria-label="Switch language"><span class="ltl">EN</span></button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
 </nav>
 
 <article class="post-container">
-
-  <a href="../" class="post-back">← Tất cả bài viết</a>
+  <a href="../" class="post-back">← <span data-vi="Tất cả bài viết" data-en="All articles">Tất cả bài viết</span></a>
 
   <header class="post-header">
     <span class="blog-tag tag-ai">AI</span>
-    <h1 class="post-title">RAG Pipeline trên GCP:<br>Bài học từ Production</h1>
+    <h1 class="post-title">
+      <span class="lang-vi">RAG Pipeline trên GCP:<br>Bài học từ Production</span>
+      <span class="lang-en">RAG Pipeline on GCP:<br>Lessons from Production</span>
+    </h1>
     <div class="post-meta-row">
       <span>Tu Doan Minh</span>
       <span class="blog-meta-dot"></span>
@@ -39,30 +46,21 @@
     </div>
   </header>
 
-  <div class="post-body">
-
-    <p>
-      Sau 3 tháng vận hành hệ thống RAG (Retrieval-Augmented Generation) trên GCP cho một khách hàng enterprise,
-      tôi muốn chia sẻ những gì thực sự xảy ra khi bạn đưa một LLM pipeline vào production —
-      không phải demo notebook, mà là hệ thống xử lý 50,000+ query/ngày.
-    </p>
-
-    <h2>Kiến trúc tổng quan</h2>
-
-    <p>
-      Stack cuối cùng sau nhiều lần iterate:
-    </p>
-
-    <ul>
-      <li><strong>LLM:</strong> Gemini 1.5 Pro qua Vertex AI</li>
-      <li><strong>Vector DB:</strong> Weaviate trên GKE (self-hosted)</li>
-      <li><strong>Orchestration:</strong> LangChain + custom retrieval logic</li>
-      <li><strong>Embedding:</strong> <code>text-embedding-004</code> (Vertex AI)</li>
-      <li><strong>Cache:</strong> Redis (Memorystore) cho semantic caching</li>
-      <li><strong>Serving:</strong> FastAPI trên Cloud Run</li>
-    </ul>
-
-    <pre><code>User Query
+  <!-- Vietnamese -->
+  <div class="lang-vi">
+    <div class="post-body">
+      <p>Sau 3 tháng vận hành hệ thống RAG (Retrieval-Augmented Generation) trên GCP cho một khách hàng enterprise, tôi muốn chia sẻ những gì thực sự xảy ra khi bạn đưa một LLM pipeline vào production — không phải demo notebook, mà là hệ thống xử lý 50,000+ query/ngày.</p>
+      <h2>Kiến trúc tổng quan</h2>
+      <p>Stack cuối cùng sau nhiều lần iterate:</p>
+      <ul>
+        <li><strong>LLM:</strong> Gemini 1.5 Pro qua Vertex AI</li>
+        <li><strong>Vector DB:</strong> Weaviate trên GKE (self-hosted)</li>
+        <li><strong>Orchestration:</strong> LangChain + custom retrieval logic</li>
+        <li><strong>Embedding:</strong> <code>text-embedding-004</code> (Vertex AI)</li>
+        <li><strong>Cache:</strong> Redis (Memorystore) cho semantic caching</li>
+        <li><strong>Serving:</strong> FastAPI trên Cloud Run</li>
+      </ul>
+      <pre><code>User Query
     │
     ▼
 Semantic Cache (Redis)  ──hit──▶  Return cached response
@@ -71,49 +69,23 @@ Semantic Cache (Redis)  ──hit──▶  Return cached response
 Query Rewriting (Gemini Flash)
     │
     ▼
-Vector Search (Weaviate)
-    │  top-k=5, hybrid search
-    ▼
-Reranking (Cross-encoder)
+Vector Search (Weaviate) — hybrid search, top-k=5
     │
     ▼
-Context Assembly + Prompt
+Reranking (Cross-encoder)
     │
     ▼
 Gemini 1.5 Pro (Vertex AI)
     │
     ▼
 Response + Source Citations</code></pre>
-
-    <h2>Sai lầm #1: Tin tưởng cosine similarity quá mức</h2>
-
-    <p>
-      Ban đầu tôi dùng pure vector search với cosine similarity, top-k=3. Kết quả trên dev dataset rất ổn,
-      nhưng khi production traffic vào, precision giảm rõ rệt — đặc biệt với các câu hỏi có nhiều negatives.
-    </p>
-
-    <p>
-      Giải pháp: chuyển sang <strong>hybrid search</strong> (dense + sparse BM25) và thêm cross-encoder reranking.
-      Latency tăng ~120ms nhưng relevance score cải thiện 18% theo user feedback.
-    </p>
-
-    <blockquote>
-      Đừng skip reranking — nó là thứ tạo ra sự khác biệt giữa "hoạt động được" và "thực sự tốt".
-    </blockquote>
-
-    <h2>Sai lầm #2: Chunk size cố định</h2>
-
-    <p>
-      Chunk 512 tokens nghe có vẻ hợp lý. Nhưng với documents có cấu trúc phức tạp (bảng, code, danh sách),
-      fixed-size chunking phá vỡ context một cách tàn nhẫn.
-    </p>
-
-    <p>
-      Tôi chuyển sang <strong>semantic chunking</strong> — chia dựa trên sentence embeddings similarity,
-      không dựa trên token count. Document loader pipeline:
-    </p>
-
-    <pre><code>from langchain_experimental.text_splitter import SemanticChunker
+      <h2>Sai lầm #1: Tin tưởng cosine similarity quá mức</h2>
+      <p>Ban đầu tôi dùng pure vector search với cosine similarity, top-k=3. Kết quả trên dev dataset rất ổn, nhưng khi production traffic vào, precision giảm rõ rệt — đặc biệt với các câu hỏi có nhiều negatives.</p>
+      <p>Giải pháp: chuyển sang <strong>hybrid search</strong> (dense + sparse BM25) và thêm cross-encoder reranking. Latency tăng ~120ms nhưng relevance score cải thiện 18% theo user feedback.</p>
+      <blockquote>Đừng skip reranking — nó là thứ tạo ra sự khác biệt giữa "hoạt động được" và "thực sự tốt".</blockquote>
+      <h2>Sai lầm #2: Chunk size cố định</h2>
+      <p>Chunk 512 tokens nghe có vẻ hợp lý. Nhưng với documents có cấu trúc phức tạp (bảng, code, danh sách), fixed-size chunking phá vỡ context một cách tàn nhẫn. Tôi chuyển sang <strong>semantic chunking</strong>:</p>
+      <pre><code>from langchain_experimental.text_splitter import SemanticChunker
 from langchain_google_vertexai import VertexAIEmbeddings
 
 embeddings = VertexAIEmbeddings(model_name="text-embedding-004")
@@ -121,92 +93,101 @@ splitter = SemanticChunker(
     embeddings,
     breakpoint_threshold_type="percentile",
     breakpoint_threshold_amount=90
-)
-
-docs = splitter.create_documents([raw_text])</code></pre>
-
-    <h2>Tối ưu latency: từ 2.4s xuống 780ms</h2>
-
-    <p>Breakdown latency ban đầu:</p>
-
-    <ul>
-      <li>Embedding query: 180ms</li>
-      <li>Vector search: 95ms</li>
-      <li>Reranking: 340ms</li>
-      <li>LLM generation: 1,800ms</li>
-    </ul>
-
-    <p>Những thay đổi giảm latency nhiều nhất:</p>
-
-    <h3>1. Semantic cache với Redis</h3>
-    <p>
-      Cache response dựa trên embedding similarity thay vì exact match.
-      Threshold = 0.92 cosine similarity. Cache hit rate đạt 34% sau 1 tuần — giảm đáng kể LLM calls.
-    </p>
-
-    <h3>2. Streaming response</h3>
-    <p>
-      Dù total latency không đổi, <em>perceived latency</em> giảm mạnh khi stream tokens về client.
-      Time-to-first-token từ 1.8s xuống còn ~400ms.
-    </p>
-
-    <h3>3. Async embedding + search</h3>
-    <p>
-      Query rewriting và embedding chạy concurrent thay vì sequential:
-    </p>
-
-    <pre><code>async def retrieve(query: str) -> list[Document]:
+)</code></pre>
+      <h2>Tối ưu latency: từ 2.4s xuống 780ms</h2>
+      <h3>1. Semantic cache với Redis</h3>
+      <p>Cache response dựa trên embedding similarity (threshold = 0.92). Cache hit rate đạt 34% sau 1 tuần — giảm đáng kể LLM calls.</p>
+      <h3>2. Async embedding + search</h3>
+      <pre><code>async def retrieve(query: str) -> list[Document]:
     rewritten, embedding = await asyncio.gather(
         rewrite_query(query),
         embed_query(query)
     )
     return await hybrid_search(rewritten, embedding)</code></pre>
+      <h2>Kết luận</h2>
+      <p>RAG không phải là "thêm vector DB rồi gọi LLM". Phần khó không phải code — mà là hiểu data của bạn, iterate retrieval strategy, và build observability ngay từ đầu. Nếu bạn đang bắt đầu: <strong>invest time vào chunking và reranking</strong> trước.</p>
+    </div>
+  </div>
 
-    <h2>Monitoring trong production</h2>
+  <!-- English -->
+  <div class="lang-en">
+    <div class="post-body">
+      <p>After three months running a RAG (Retrieval-Augmented Generation) system on GCP for an enterprise client, here's what actually happens when you put an LLM pipeline into production — not a demo notebook, but a system handling 50,000+ queries per day.</p>
+      <h2>Architecture overview</h2>
+      <p>The final stack after many iterations:</p>
+      <ul>
+        <li><strong>LLM:</strong> Gemini 1.5 Pro via Vertex AI</li>
+        <li><strong>Vector DB:</strong> Weaviate on GKE (self-hosted)</li>
+        <li><strong>Orchestration:</strong> LangChain + custom retrieval logic</li>
+        <li><strong>Embedding:</strong> <code>text-embedding-004</code> (Vertex AI)</li>
+        <li><strong>Cache:</strong> Redis (Memorystore) for semantic caching</li>
+        <li><strong>Serving:</strong> FastAPI on Cloud Run</li>
+      </ul>
+      <pre><code>User Query
+    │
+    ▼
+Semantic Cache (Redis)  ──hit──▶  Return cached response
+    │ miss
+    ▼
+Query Rewriting (Gemini Flash)
+    │
+    ▼
+Vector Search (Weaviate) — hybrid search, top-k=5
+    │
+    ▼
+Reranking (Cross-encoder)
+    │
+    ▼
+Gemini 1.5 Pro (Vertex AI)
+    │
+    ▼
+Response + Source Citations</code></pre>
+      <h2>Mistake #1: Over-trusting cosine similarity</h2>
+      <p>I started with pure vector search using cosine similarity, top-k=3. Results on the dev dataset looked great, but when production traffic hit, precision dropped noticeably — especially on questions with many negative candidates.</p>
+      <p>The fix: switch to <strong>hybrid search</strong> (dense + sparse BM25) and add a cross-encoder reranker. Latency increased ~120ms but relevance score improved 18% based on user feedback.</p>
+      <blockquote>Don't skip reranking — it's the difference between "it works" and "it actually works well".</blockquote>
+      <h2>Mistake #2: Fixed chunk sizes</h2>
+      <p>512 tokens sounds reasonable. But for documents with complex structure (tables, code, lists), fixed-size chunking brutally destroys context. I switched to <strong>semantic chunking</strong>:</p>
+      <pre><code>from langchain_experimental.text_splitter import SemanticChunker
+from langchain_google_vertexai import VertexAIEmbeddings
 
-    <p>
-      Metrics quan trọng nhất tôi track trên Cloud Monitoring + Grafana:
-    </p>
-
-    <ul>
-      <li><strong>Retrieval precision@k</strong> — tỷ lệ relevant docs trong top-k results</li>
-      <li><strong>Answer faithfulness</strong> — LLM có hallucinate không (dùng Ragas framework)</li>
-      <li><strong>Cache hit rate</strong> — efficiency của semantic cache</li>
-      <li><strong>P95 latency</strong> — theo từng component trong pipeline</li>
-      <li><strong>Token usage</strong> — cost tracking per request type</li>
-    </ul>
-
-    <h2>Kết luận</h2>
-
-    <p>
-      RAG không phải là "thêm vector DB rồi gọi LLM". Phần khó không phải code — mà là
-      hiểu data của bạn, iterate retrieval strategy, và build observability ngay từ đầu.
-    </p>
-
-    <p>
-      Nếu bạn đang bắt đầu một RAG project: <strong>invest time vào chunking và reranking</strong>,
-      đừng để đến khi vào production mới nhận ra vấn đề.
-    </p>
-
+embeddings = VertexAIEmbeddings(model_name="text-embedding-004")
+splitter = SemanticChunker(
+    embeddings,
+    breakpoint_threshold_type="percentile",
+    breakpoint_threshold_amount=90
+)</code></pre>
+      <h2>Latency: from 2.4s down to 780ms</h2>
+      <h3>1. Semantic cache with Redis</h3>
+      <p>Cache responses based on embedding similarity (threshold = 0.92). Cache hit rate reached 34% after one week — significantly reducing LLM calls.</p>
+      <h3>2. Async embedding + search</h3>
+      <pre><code>async def retrieve(query: str) -> list[Document]:
+    rewritten, embedding = await asyncio.gather(
+        rewrite_query(query),
+        embed_query(query)
+    )
+    return await hybrid_search(rewritten, embedding)</code></pre>
+      <h2>Takeaways</h2>
+      <p>RAG is not "add a vector DB then call an LLM". The hard part isn't the code — it's understanding your data, iterating on retrieval strategy, and building observability from day one. If you're starting out: <strong>invest time in chunking and reranking first</strong>.</p>
+    </div>
   </div>
 
   <footer class="post-footer">
-    <a href="../" class="btn btn-ghost">← Bài viết khác</a>
-    <a href="../../#contact" class="btn btn-primary">Thảo luận thêm</a>
+    <a href="../" class="btn btn-ghost" data-vi="← Bài viết khác" data-en="← More articles">← Bài viết khác</a>
+    <a href="../../#contact" class="btn btn-primary" data-vi="Thảo luận thêm" data-en="Get in touch">Thảo luận thêm</a>
   </footer>
-
 </article>
 
 <script>
 (function () {
-  const obs = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
-    });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+  var ham = document.getElementById('hamburger');
+  var nav = document.getElementById('nav-links');
+  ham.addEventListener('click', function () {
+    var open = nav.classList.toggle('open');
+    ham.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
 }());
 </script>
-
 </body>
 </html>

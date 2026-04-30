@@ -3,227 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terraform Best Practices cho Multi-cloud — Tu Doan Minh</title>
-  <meta name="description" content="Module structure, remote state, workspace strategy và secrets management khi dùng Terraform với AWS, Azure và GCP.">
+  <title>Terraform Best Practices for Multi-cloud — Tu Doan Minh</title>
+  <meta name="description" content="Module structure, remote state, workspace strategy and secrets management with Terraform across AWS, Azure and GCP.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../css/custom.css">
   <link rel="icon" href="../../assets/img/cloud-icon-8.png">
+  <script src="../../js/i18n.js"></script>
 </head>
 <body>
 
 <nav class="nav">
   <a href="../../" class="nav-logo">Tu Doan Minh</a>
-  <ul class="nav-links">
+  <ul class="nav-links" id="nav-links">
     <li><a href="../../#expertise">Expertise</a></li>
     <li><a href="../../#skills">Skills</a></li>
     <li><a href="../">Blog</a></li>
     <li><a href="../../#contact">Contact</a></li>
   </ul>
+  <div class="nav-right">
+    <button class="lang-toggle" id="lang-toggle" data-cur="vi" aria-label="Switch language"><span class="ltl">EN</span></button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
 </nav>
 
 <article class="post-container">
-
-  <a href="../" class="post-back">← Tất cả bài viết</a>
+  <a href="../" class="post-back">← <span data-vi="Tất cả bài viết" data-en="All articles">Tất cả bài viết</span></a>
 
   <header class="post-header">
     <span class="blog-tag tag-iac">IaC</span>
-    <h1 class="post-title">Terraform Best Practices<br>cho Multi-cloud Infrastructure</h1>
+    <h1 class="post-title">
+      <span class="lang-vi">Terraform Best Practices<br>cho Multi-cloud Infrastructure</span>
+      <span class="lang-en">Terraform Best Practices<br>for Multi-cloud Infrastructure</span>
+    </h1>
     <div class="post-meta-row">
-      <span>Tu Doan Minh</span>
-      <span class="blog-meta-dot"></span>
-      <span>Jan 2026</span>
-      <span class="blog-meta-dot"></span>
+      <span>Tu Doan Minh</span><span class="blog-meta-dot"></span>
+      <span>Jan 2026</span><span class="blog-meta-dot"></span>
       <span>7 min read</span>
     </div>
   </header>
 
-  <div class="post-body">
-
-    <p>
-      Sau 6 năm viết Terraform — từ những file <code>main.tf</code> 2000 dòng đến monorepo với 80+ modules —
-      tôi muốn chia sẻ những pattern thực sự hoạt động khi scale lên multi-cloud, multi-team.
-    </p>
-
-    <h2>Cấu trúc thư mục</h2>
-
-    <p>
-      Pattern tôi dùng hiện tại cho codebase có 3 cloud và 5 environment:
-    </p>
-
-    <pre><code>infrastructure/
-├── modules/                  # Reusable modules (no cloud-specific)
+  <!-- Vietnamese -->
+  <div class="lang-vi">
+    <div class="post-body">
+      <p>Sau 6 năm viết Terraform — từ những file <code>main.tf</code> 2000 dòng đến monorepo với 80+ modules — tôi muốn chia sẻ những pattern thực sự hoạt động khi scale lên multi-cloud, multi-team.</p>
+      <h2>Cấu trúc thư mục</h2>
+      <pre><code>infrastructure/
+├── modules/                  # Reusable modules
 │   ├── networking/
 │   ├── kubernetes/
 │   └── observability/
 ├── cloud/
-│   ├── aws/
-│   │   ├── modules/          # AWS-specific modules
-│   │   └── environments/
-│   │       ├── dev/
-│   │       ├── staging/
-│   │       └── prod/
-│   ├── gcp/
-│   │   └── environments/...
-│   └── azure/
-│       └── environments/...
-├── global/                   # DNS, CDN, cross-cloud resources
-└── _bootstrap/               # Remote state backends (run once)</code></pre>
-
-    <blockquote>
-      Tách <code>modules/</code> ra khỏi <code>environments/</code> ngay từ đầu — đây là quyết định khó sửa nhất nếu để sau.
-    </blockquote>
-
-    <h2>Remote State với Locking</h2>
-
-    <p>
-      Mỗi environment có state riêng, không bao giờ share state giữa environments:
-    </p>
-
-    <pre><code># backend.tf — prod AWS
-terraform {
+│   ├── aws/environments/{dev,staging,prod}/
+│   ├── gcp/environments/...
+│   └── azure/environments/...
+└── _bootstrap/               # Remote state backends</code></pre>
+      <blockquote>Tách <code>modules/</code> ra khỏi <code>environments/</code> ngay từ đầu — đây là quyết định khó sửa nhất nếu để sau.</blockquote>
+      <h2>Remote State với Locking</h2>
+      <pre><code>terraform {
   backend "s3" {
     bucket         = "company-tfstate-prod"
     key            = "aws/prod/terraform.tfstate"
     region         = "ap-southeast-1"
     encrypt        = true
     dynamodb_table = "terraform-state-lock"
-    kms_key_id     = "arn:aws:kms:ap-southeast-1:123456789:key/abc123"
+    kms_key_id     = "arn:aws:kms:..."
   }
-}
-
-# Cross-cloud state reference — đọc output từ AWS state trong GCP config
-data "terraform_remote_state" "aws_vpc" {
-  backend = "s3"
-  config = {
-    bucket = "company-tfstate-prod"
-    key    = "aws/prod/terraform.tfstate"
-    region = "ap-southeast-1"
-  }
-}
-
-# Dùng VPC CIDR từ AWS để config GCP VPC peering
-locals {
-  aws_vpc_cidr = data.terraform_remote_state.aws_vpc.outputs.vpc_cidr
 }</code></pre>
-
-    <h2>Module Versioning</h2>
-
-    <p>
-      Modules được version qua git tags — không dùng <code>source = "../../../modules/networking"</code> trong production:
-    </p>
-
-    <pre><code>module "vpc" {
-  source  = "git::https://github.com/company/tf-modules.git//aws/vpc?ref=v2.4.1"
-
-  cidr_block          = "10.0.0.0/16"
-  availability_zones  = ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
-  enable_nat_gateway  = true
-  single_nat_gateway  = var.environment != "prod"
+      <h2>Module Versioning</h2>
+      <pre><code>module "vpc" {
+  source = "git::https://github.com/company/tf-modules.git//aws/vpc?ref=v2.4.1"
+  cidr_block         = "10.0.0.0/16"
+  availability_zones = ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
 }</code></pre>
-
-    <h2>Secrets Management — Không bao giờ hardcode</h2>
-
-    <p>
-      Rule tuyệt đối: không có secret nào trong Terraform state hoặc code.
-      Pattern tôi dùng với HashiCorp Vault:
-    </p>
-
-    <pre><code>provider "vault" {
-  address = "https://vault.internal:8200"
-  auth_login {
-    path = "auth/kubernetes/login"
-    parameters = {
-      role = "terraform-prod"
-      jwt  = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
-    }
-  }
-}
-
-data "vault_generic_secret" "db_creds" {
+      <h2>Secrets Management — Không bao giờ hardcode</h2>
+      <pre><code>data "vault_generic_secret" "db_creds" {
   path = "secret/prod/database"
 }
-
 resource "aws_db_instance" "main" {
   username = data.vault_generic_secret.db_creds.data["username"]
   password = data.vault_generic_secret.db_creds.data["password"]
-  # password không bao giờ lưu vào state vì dùng sensitive = true
 }</code></pre>
+      <h2>Tôi không dùng Workspaces</h2>
+      <p>Terraform Workspaces nghe hay nhưng trong thực tế gây confusion. Tôi prefer <strong>separate directories + separate state files</strong> — mỗi environment là một thư mục riêng biệt, không có nguy cơ apply nhầm environment.</p>
+      <h2>Những điều tôi ước biết sớm hơn</h2>
+      <ul>
+        <li>Đừng import resources thủ công — viết code từ đầu, dù mất thêm 2 tiếng</li>
+        <li>Tag mọi thứ ngay từ commit đầu tiên — sửa sau rất đau</li>
+        <li>Chạy <code>terraform plan</code> trong CI — không bao giờ apply local trong production</li>
+        <li>Pin provider versions: <code>~> 5.0</code> không phải <code>>= 5.0</code></li>
+      </ul>
+    </div>
+  </div>
 
-    <h2>Workspace Strategy — Tôi không dùng Workspaces</h2>
-
-    <p>
-      Terraform Workspaces nghe hay nhưng trong thực tế gây confusion.
-      Tôi prefer <strong>separate directories + separate state files</strong>:
-    </p>
-
-    <ul>
-      <li>Mỗi environment là một thư mục riêng biệt</li>
-      <li>Không có nguy cơ <code>terraform apply</code> nhầm environment</li>
-      <li>Dễ dàng có config khác nhau giữa dev và prod mà không cần <code>count</code> tricks</li>
-      <li>State isolation hoàn toàn — blast radius của một incident nhỏ hơn</li>
-    </ul>
-
-    <h2>CI/CD Pipeline cho Terraform</h2>
-
-    <pre><code># .github/workflows/terraform.yml
-jobs:
-  plan:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Terraform Format Check
-      run: terraform fmt -check -recursive
-
-    - name: Terraform Validate
-      run: terraform validate
-
-    - name: tfsec Security Scan
-      uses: aquasecurity/tfsec-action@v1.0.0
-
-    - name: Infracost — Cost Estimate
-      uses: infracost/actions/setup@v3
-      with:
-        api-key: ${{ secrets.INFRACOST_API_KEY }}
-
-    - name: Terraform Plan
-      run: terraform plan -out=tfplan
-
-    - name: Post Plan to PR
-      uses: actions/github-script@v7
-      # Comment plan output vào PR để review</code></pre>
-
-    <h2>Những điều tôi ước biết sớm hơn</h2>
-
-    <ul>
-      <li><strong>Đừng import resources thủ công</strong> — viết code từ đầu, dù mất thêm 2 tiếng</li>
-      <li><strong>Tag mọi thứ ngay từ commit đầu tiên</strong> — sửa sau rất đau</li>
-      <li><strong>Chạy <code>terraform plan</code> trong CI</strong> — không bao giờ apply local trong production</li>
-      <li><strong>Dùng <code>moved</code> block</strong> khi rename resource — tránh destroy/recreate không cần thiết</li>
-      <li><strong>Pin provider versions</strong> — <code>~> 5.0</code> không phải <code>&gt;= 5.0</code></li>
-    </ul>
-
+  <!-- English -->
+  <div class="lang-en">
+    <div class="post-body">
+      <p>After six years writing Terraform — from 2,000-line <code>main.tf</code> files to a monorepo with 80+ modules — here are the patterns that actually work when scaling to multi-cloud, multi-team.</p>
+      <h2>Directory structure</h2>
+      <pre><code>infrastructure/
+├── modules/                  # Reusable modules
+│   ├── networking/
+│   ├── kubernetes/
+│   └── observability/
+├── cloud/
+│   ├── aws/environments/{dev,staging,prod}/
+│   ├── gcp/environments/...
+│   └── azure/environments/...
+└── _bootstrap/               # Remote state backends</code></pre>
+      <blockquote>Separate <code>modules/</code> from <code>environments/</code> from the start — this is the hardest decision to fix later.</blockquote>
+      <h2>Remote state with locking</h2>
+      <pre><code>terraform {
+  backend "s3" {
+    bucket         = "company-tfstate-prod"
+    key            = "aws/prod/terraform.tfstate"
+    region         = "ap-southeast-1"
+    encrypt        = true
+    dynamodb_table = "terraform-state-lock"
+    kms_key_id     = "arn:aws:kms:..."
+  }
+}</code></pre>
+      <h2>Module versioning</h2>
+      <pre><code>module "vpc" {
+  source = "git::https://github.com/company/tf-modules.git//aws/vpc?ref=v2.4.1"
+  cidr_block         = "10.0.0.0/16"
+  availability_zones = ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
+}</code></pre>
+      <h2>Secrets management — never hardcode</h2>
+      <pre><code>data "vault_generic_secret" "db_creds" {
+  path = "secret/prod/database"
+}
+resource "aws_db_instance" "main" {
+  username = data.vault_generic_secret.db_creds.data["username"]
+  password = data.vault_generic_secret.db_creds.data["password"]
+}</code></pre>
+      <h2>Why I don't use Workspaces</h2>
+      <p>Terraform Workspaces sound appealing but cause confusion in practice. I prefer <strong>separate directories + separate state files</strong> — each environment is its own directory, eliminating the risk of applying to the wrong environment.</p>
+      <h2>Things I wish I'd known earlier</h2>
+      <ul>
+        <li>Don't import resources manually — write code from scratch, even if it takes an extra two hours</li>
+        <li>Tag everything from the very first commit — retrofitting tags is painful</li>
+        <li>Always run <code>terraform plan</code> in CI — never apply locally in production</li>
+        <li>Pin provider versions: <code>~> 5.0</code> not <code>>= 5.0</code></li>
+      </ul>
+    </div>
   </div>
 
   <footer class="post-footer">
-    <a href="../" class="btn btn-ghost">← Bài viết khác</a>
-    <a href="../../#contact" class="btn btn-primary">Thảo luận thêm</a>
+    <a href="../" class="btn btn-ghost" data-vi="← Bài viết khác" data-en="← More articles">← Bài viết khác</a>
+    <a href="../../#contact" class="btn btn-primary" data-vi="Thảo luận thêm" data-en="Get in touch">Thảo luận thêm</a>
   </footer>
-
 </article>
 
 <script>
 (function () {
-  const obs = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
-    });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+  var ham = document.getElementById('hamburger');
+  var nav = document.getElementById('nav-links');
+  ham.addEventListener('click', function () {
+    var open = nav.classList.toggle('open');
+    ham.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
 }());
 </script>
-
 </body>
 </html>

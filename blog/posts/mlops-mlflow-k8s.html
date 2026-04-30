@@ -3,81 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MLflow + Kubernetes: MLOps Pipeline từ A đến Z — Tu Doan Minh</title>
-  <meta name="description" content="Thiết kế end-to-end ML platform với MLflow và Kubernetes — experiment tracking, model registry, canary deployment.">
+  <title>MLflow + Kubernetes: End-to-End MLOps — Tu Doan Minh</title>
+  <meta name="description" content="End-to-end ML platform with MLflow and Kubernetes — experiment tracking, model registry, canary deployment.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../css/custom.css">
   <link rel="icon" href="../../assets/img/cloud-icon-8.png">
+  <script src="../../js/i18n.js"></script>
 </head>
 <body>
 
 <nav class="nav">
   <a href="../../" class="nav-logo">Tu Doan Minh</a>
-  <ul class="nav-links">
+  <ul class="nav-links" id="nav-links">
     <li><a href="../../#expertise">Expertise</a></li>
     <li><a href="../../#skills">Skills</a></li>
     <li><a href="../">Blog</a></li>
     <li><a href="../../#contact">Contact</a></li>
   </ul>
+  <div class="nav-right">
+    <button class="lang-toggle" id="lang-toggle" data-cur="vi" aria-label="Switch language"><span class="ltl">EN</span></button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
 </nav>
 
 <article class="post-container">
-
-  <a href="../" class="post-back">← Tất cả bài viết</a>
+  <a href="../" class="post-back">← <span data-vi="Tất cả bài viết" data-en="All articles">Tất cả bài viết</span></a>
 
   <header class="post-header">
     <span class="blog-tag tag-mlops">MLOps</span>
-    <h1 class="post-title">MLflow + Kubernetes:<br>MLOps Pipeline từ A đến Z</h1>
+    <h1 class="post-title">
+      <span class="lang-vi">MLflow + Kubernetes:<br>MLOps Pipeline từ A đến Z</span>
+      <span class="lang-en">MLflow + Kubernetes:<br>End-to-End MLOps Pipeline</span>
+    </h1>
     <div class="post-meta-row">
-      <span>Tu Doan Minh</span>
-      <span class="blog-meta-dot"></span>
-      <span>Feb 2026</span>
-      <span class="blog-meta-dot"></span>
+      <span>Tu Doan Minh</span><span class="blog-meta-dot"></span>
+      <span>Feb 2026</span><span class="blog-meta-dot"></span>
       <span>10 min read</span>
     </div>
   </header>
 
-  <div class="post-body">
-
-    <p>
-      "Model của tôi train xong rồi, giờ deploy lên production như thế nào?" — câu hỏi này
-      tôi nghe ít nhất một lần mỗi tuần. Bài này là câu trả lời đầy đủ: một MLOps platform
-      tôi đã build và vận hành thực tế, từ experiment đến production monitoring.
-    </p>
-
-    <h2>Kiến trúc tổng thể</h2>
-
-    <pre><code>┌─────────────────────────────────────────────────────┐
-│                   ML Platform                        │
-│                                                     │
-│  Data      Training     Registry    Serving         │
-│  ─────     ────────     ────────    ───────         │
-│  Feature   MLflow       MLflow      KServe          │
-│  Store     Tracking     Model       (Istio)         │
-│  (Feast)   + Runs       Registry    + Canary        │
-│                                                     │
-│  Monitoring: Prometheus + Grafana + Evidently       │
-└─────────────────────────────────────────────────────┘</code></pre>
-
-    <h2>MLflow trên Kubernetes</h2>
-
-    <p>
-      MLflow tracking server deploy trên K8s với PostgreSQL backend và S3/GCS artifact store:
-    </p>
-
-    <pre><code># mlflow-deployment.yaml
-apiVersion: apps/v1
+  <!-- Vietnamese -->
+  <div class="lang-vi">
+    <div class="post-body">
+      <p>"Model của tôi train xong rồi, giờ deploy lên production như thế nào?" — câu hỏi này tôi nghe ít nhất một lần mỗi tuần. Bài này là câu trả lời đầy đủ: một MLOps platform tôi đã build và vận hành thực tế, từ experiment đến production monitoring.</p>
+      <h2>Kiến trúc tổng thể</h2>
+      <pre><code>Data → Feature Store (Feast) → Training (MLflow) → Registry → Serving (KServe)
+                                                                     ↓
+                                              Monitoring (Prometheus + Evidently)</code></pre>
+      <h2>MLflow trên Kubernetes</h2>
+      <pre><code>apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mlflow-tracking
   namespace: mlops
 spec:
   replicas: 2
-  selector:
-    matchLabels:
-      app: mlflow-tracking
   template:
     spec:
       containers:
@@ -86,41 +68,10 @@ spec:
         args:
           - mlflow
           - server
-          - --host=0.0.0.0
-          - --port=5000
           - --backend-store-uri=postgresql://$(DB_USER):$(DB_PASS)@postgres:5432/mlflow
-          - --default-artifact-root=gs://my-mlflow-artifacts
-          - --serve-artifacts
-        envFrom:
-        - secretRef:
-            name: mlflow-secrets</code></pre>
-
-    <h2>Training Pipeline với Kubeflow Pipelines</h2>
-
-    <p>
-      Mỗi training run là một Kubeflow Pipeline — reproducible, versioned và có thể trigger từ CI/CD:
-    </p>
-
-    <pre><code>import kfp
-from kfp import dsl
-
-@dsl.component(base_image="python:3.11")
-def train_model(
-    data_path: str,
-    model_name: str,
-    mlflow_uri: str,
-    output_model: dsl.Output[dsl.Model]
-):
-    import mlflow
-    mlflow.set_tracking_uri(mlflow_uri)
-
-    with mlflow.start_run():
-        # train...
-        mlflow.log_params({"epochs": 50, "lr": 0.001})
-        mlflow.log_metric("val_f1", 0.923)
-        mlflow.sklearn.log_model(model, "model")
-
-@dsl.pipeline(name="fraud-detection-training")
+          - --default-artifact-root=gs://my-mlflow-artifacts</code></pre>
+      <h2>Training Pipeline với Kubeflow Pipelines</h2>
+      <pre><code>@dsl.pipeline(name="fraud-detection-training")
 def training_pipeline(data_version: str = "v20260201"):
     preprocess = preprocess_data(data_version=data_version)
     train = train_model(
@@ -132,127 +83,123 @@ def training_pipeline(data_version: str = "v20260201"):
         model=train.outputs["output_model"],
         threshold=0.90
     )</code></pre>
-
-    <h2>Model Registry và Promotion Flow</h2>
-
-    <p>
-      Model chỉ được promote lên production qua một pipeline có gate rõ ràng:
-    </p>
-
-    <ul>
-      <li><strong>Staging:</strong> F1 &gt; 0.90, không có bias vi phạm fairness threshold</li>
-      <li><strong>Production Canary:</strong> 5% traffic, monitor 24h</li>
-      <li><strong>Production Full:</strong> auto-promote nếu error rate &lt; 0.1% và latency P95 &lt; 200ms</li>
-    </ul>
-
-    <pre><code># Promote model qua MLflow API
-import mlflow
-
-client = mlflow.MlflowClient()
-
-# Tìm run tốt nhất
-best_run = client.search_runs(
-    experiment_ids=["1"],
-    filter_string="metrics.val_f1 > 0.90",
-    order_by=["metrics.val_f1 DESC"],
-    max_results=1
-)[0]
-
-# Register và promote
-mv = client.create_model_version(
-    name="fraud-detector",
-    source=best_run.info.artifact_uri + "/model",
-    run_id=best_run.info.run_id
-)
-client.transition_model_version_stage(
-    name="fraud-detector",
-    version=mv.version,
-    stage="Staging"
-)</code></pre>
-
-    <h2>Canary Deployment với KServe + Istio</h2>
-
-    <p>
-      KServe InferenceService hỗ trợ canary natively — chỉ cần thay đổi <code>canaryTrafficPercent</code>:
-    </p>
-
-    <pre><code>apiVersion: serving.kserve.io/v1beta1
+      <h2>Canary Deployment với KServe + Istio</h2>
+      <pre><code>apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
   name: fraud-detector
-  namespace: production
 spec:
   predictor:
     model:
-      modelFormat:
-        name: sklearn
       storageUri: gs://models/fraud-detector/v2
   canaryTrafficPercent: 10
   canary:
     predictor:
       model:
-        modelFormat:
-          name: sklearn
         storageUri: gs://models/fraud-detector/v3</code></pre>
-
-    <h2>Drift Detection và Auto-rollback</h2>
-
-    <p>
-      Dùng Evidently AI để monitor data drift và prediction drift theo giờ.
-      Khi PSI &gt; 0.2, tự động trigger rollback qua ArgoCD:
-    </p>
-
-    <pre><code>from evidently.report import Report
-from evidently.metric_preset import DataDriftPreset
-
-def check_drift_and_rollback(reference_data, current_data):
+      <h2>Drift Detection và Auto-rollback</h2>
+      <pre><code>def check_drift_and_rollback(reference_data, current_data):
     report = Report(metrics=[DataDriftPreset()])
     report.run(reference_data=reference_data, current_data=current_data)
+    if report.as_dict()["metrics"][0]["result"]["dataset_drift"]:
+        trigger_argocd_rollback()</code></pre>
+      <blockquote>Auto-rollback đã cứu production 2 lần trong 6 tháng đầu — một lần do data pipeline thay đổi schema, một lần do seasonal drift không lường trước.</blockquote>
+      <h2>Lessons Learned</h2>
+      <ul>
+        <li>Feature store (Feast) loại bỏ training/serving skew ngay từ đầu</li>
+        <li>Log input data cùng với prediction — không có nó, debug production issues gần như impossible</li>
+        <li>Canary nhỏ (5-10%) ít nhất 24h trước khi full rollout</li>
+        <li>Mọi production model phải có owner, expiry date và fallback plan</li>
+      </ul>
+    </div>
+  </div>
 
-    result = report.as_dict()
-    drift_score = result["metrics"][0]["result"]["dataset_drift"]
-
-    if drift_score:
-        # Trigger ArgoCD rollback via API
-        requests.post(
-            "https://argocd.internal/api/v1/applications/fraud-detector/rollback",
-            headers={"Authorization": f"Bearer {ARGOCD_TOKEN}"},
-            json={"revision": get_last_stable_revision()}
-        )
-        send_alert(f"Model rollback triggered — drift detected")</code></pre>
-
-    <blockquote>
-      Auto-rollback đã cứu production 2 lần trong 6 tháng đầu vận hành — một lần do data pipeline thay đổi schema, một lần do seasonal drift không lường trước.
-    </blockquote>
-
-    <h2>Lessons Learned</h2>
-
-    <ul>
-      <li>Feature store (Feast) là investment đáng giá — loại bỏ training/serving skew ngay từ đầu</li>
-      <li>Log input data cùng với prediction — không có nó, debug production issues gần như impossible</li>
-      <li>Canary nhỏ (5-10%) ít nhất 24h trước khi full rollout — đừng vội</li>
-      <li>Model governance: mọi production model phải có owner, expiry date và fallback plan</li>
-    </ul>
-
+  <!-- English -->
+  <div class="lang-en">
+    <div class="post-body">
+      <p>"My model is trained, how do I deploy it to production?" — a question I hear at least once a week. This post is the full answer: an MLOps platform I've built and operated in production, from experiment to production monitoring.</p>
+      <h2>Overall architecture</h2>
+      <pre><code>Data → Feature Store (Feast) → Training (MLflow) → Registry → Serving (KServe)
+                                                                     ↓
+                                              Monitoring (Prometheus + Evidently)</code></pre>
+      <h2>MLflow on Kubernetes</h2>
+      <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-tracking
+  namespace: mlops
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+      - name: mlflow
+        image: ghcr.io/mlflow/mlflow:2.11.0
+        args:
+          - mlflow
+          - server
+          - --backend-store-uri=postgresql://$(DB_USER):$(DB_PASS)@postgres:5432/mlflow
+          - --default-artifact-root=gs://my-mlflow-artifacts</code></pre>
+      <h2>Training pipeline with Kubeflow Pipelines</h2>
+      <pre><code>@dsl.pipeline(name="fraud-detection-training")
+def training_pipeline(data_version: str = "v20260201"):
+    preprocess = preprocess_data(data_version=data_version)
+    train = train_model(
+        data_path=preprocess.outputs["output_data"],
+        model_name="fraud-detector",
+        mlflow_uri="http://mlflow-tracking.mlops:5000"
+    )
+    evaluate = evaluate_and_register(
+        model=train.outputs["output_model"],
+        threshold=0.90
+    )</code></pre>
+      <h2>Canary deployment with KServe + Istio</h2>
+      <pre><code>apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: fraud-detector
+spec:
+  predictor:
+    model:
+      storageUri: gs://models/fraud-detector/v2
+  canaryTrafficPercent: 10
+  canary:
+    predictor:
+      model:
+        storageUri: gs://models/fraud-detector/v3</code></pre>
+      <h2>Drift detection and auto-rollback</h2>
+      <pre><code>def check_drift_and_rollback(reference_data, current_data):
+    report = Report(metrics=[DataDriftPreset()])
+    report.run(reference_data=reference_data, current_data=current_data)
+    if report.as_dict()["metrics"][0]["result"]["dataset_drift"]:
+        trigger_argocd_rollback()</code></pre>
+      <blockquote>Auto-rollback saved production twice in the first six months — once from a data pipeline schema change, once from unexpected seasonal drift.</blockquote>
+      <h2>Lessons learned</h2>
+      <ul>
+        <li>Feature store (Feast) eliminates training/serving skew from day one</li>
+        <li>Log input data alongside predictions — without it, debugging production issues is near impossible</li>
+        <li>Keep canary small (5-10%) for at least 24h before full rollout</li>
+        <li>Every production model needs an owner, expiry date, and fallback plan</li>
+      </ul>
+    </div>
   </div>
 
   <footer class="post-footer">
-    <a href="../" class="btn btn-ghost">← Bài viết khác</a>
-    <a href="../../#contact" class="btn btn-primary">Thảo luận thêm</a>
+    <a href="../" class="btn btn-ghost" data-vi="← Bài viết khác" data-en="← More articles">← Bài viết khác</a>
+    <a href="../../#contact" class="btn btn-primary" data-vi="Thảo luận thêm" data-en="Get in touch">Thảo luận thêm</a>
   </footer>
-
 </article>
 
 <script>
 (function () {
-  const obs = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
-    });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+  var ham = document.getElementById('hamburger');
+  var nav = document.getElementById('nav-links');
+  ham.addEventListener('click', function () {
+    var open = nav.classList.toggle('open');
+    ham.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
 }());
 </script>
-
 </body>
 </html>

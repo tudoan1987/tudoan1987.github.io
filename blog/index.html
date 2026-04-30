@@ -10,104 +10,124 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/custom.css">
   <link rel="icon" href="../assets/img/cloud-icon-8.png">
+  <script src="../js/i18n.js"></script>
 </head>
 <body>
 
 <nav class="nav">
   <a href="../" class="nav-logo">Tu Doan Minh</a>
-  <ul class="nav-links">
-    <li><a href="../#expertise">Expertise</a></li>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="../#expertise" data-vi="Chuyên môn" data-en="Expertise">Chuyên môn</a></li>
     <li><a href="../#skills">Skills</a></li>
     <li><a href="../#blog">Blog</a></li>
-    <li><a href="../#contact">Contact</a></li>
+    <li><a href="../#contact" data-vi="Liên hệ" data-en="Contact">Liên hệ</a></li>
   </ul>
+  <div class="nav-right">
+    <button class="lang-toggle" id="lang-toggle" data-cur="vi" aria-label="Switch language"><span class="ltl">EN</span></button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </nav>
 
 <div class="blog-hero">
-  <div class="section-label fade-up">Writing</div>
-  <h1 class="section-title fade-up d1">All Articles</h1>
-  <p class="section-sub fade-up d2">
-    Kinh nghiệm thực chiến về Cloud, AI, MLOps và DevOps —
-    viết để chia sẻ và ghi nhớ những bài học từ production.
+  <div class="section-label fade-up" data-vi="Bài viết" data-en="Writing">Bài viết</div>
+  <h1 class="section-title fade-up d1" data-vi="Tất cả bài viết" data-en="All Articles">Tất cả bài viết</h1>
+  <p class="section-sub fade-up d2"
+     data-vi="Kinh nghiệm thực chiến về Cloud, AI, MLOps và DevOps — viết để chia sẻ và ghi nhớ những bài học từ production."
+     data-en="Hands-on experience in Cloud, AI, MLOps and DevOps — written to share and remember lessons learned from production.">
+    Kinh nghiệm thực chiến về Cloud, AI, MLOps và DevOps — viết để chia sẻ và ghi nhớ những bài học từ production.
   </p>
 
   <div class="blog-list-grid">
 
     <a href="posts/rag-pipeline-gcp.html" class="blog-card fade-up d2">
       <span class="blog-tag tag-ai">AI</span>
-      <div class="blog-title">RAG Pipeline trên GCP: Bài học từ Production</div>
+      <div class="blog-title">
+        <span class="lang-vi">RAG Pipeline trên GCP: Bài học từ Production</span>
+        <span class="lang-en">RAG Pipeline on GCP: Lessons from Production</span>
+      </div>
       <div class="blog-excerpt">
-        Xây dựng hệ thống Retrieval-Augmented Generation với Vertex AI, Weaviate và LangChain — những sai lầm gặp phải và cách tối ưu latency xuống dưới 800ms.
+        <span class="lang-vi">Xây dựng hệ thống Retrieval-Augmented Generation với Vertex AI, Weaviate và LangChain — những sai lầm gặp phải và cách tối ưu latency xuống dưới 800ms.</span>
+        <span class="lang-en">Building a RAG system with Vertex AI, Weaviate and LangChain — mistakes made and how we got latency under 800ms in production.</span>
       </div>
       <div class="blog-meta">
-        <span>Apr 2026</span>
-        <span class="blog-meta-dot"></span>
-        <span>8 min read</span>
+        <span>Apr 2026</span><span class="blog-meta-dot"></span><span>8 min read</span>
       </div>
     </a>
 
     <a href="posts/finops-multi-cloud.html" class="blog-card fade-up d3">
       <span class="blog-tag tag-cloud">Cloud</span>
-      <div class="blog-title">FinOps cho Multi-cloud: Giảm 40% chi phí AWS + GCP</div>
+      <div class="blog-title">
+        <span class="lang-vi">FinOps cho Multi-cloud: Giảm 40% chi phí AWS + GCP</span>
+        <span class="lang-en">Multi-cloud FinOps: 40% Cost Reduction on AWS + GCP</span>
+      </div>
       <div class="blog-excerpt">
-        Chiến lược tối ưu chi phí thực tế — từ right-sizing, reserved instances đến tự động hóa shutdown môi trường dev/staging ngoài giờ làm việc.
+        <span class="lang-vi">Chiến lược tối ưu chi phí thực tế — từ right-sizing, reserved instances đến tự động hóa shutdown môi trường dev/staging ngoài giờ làm việc.</span>
+        <span class="lang-en">Practical cost optimization — from right-sizing and reserved instances to automated shutdown of dev/staging environments off-hours.</span>
       </div>
       <div class="blog-meta">
-        <span>Mar 2026</span>
-        <span class="blog-meta-dot"></span>
-        <span>6 min read</span>
+        <span>Mar 2026</span><span class="blog-meta-dot"></span><span>6 min read</span>
       </div>
     </a>
 
     <a href="posts/mlops-mlflow-k8s.html" class="blog-card fade-up d4">
       <span class="blog-tag tag-mlops">MLOps</span>
-      <div class="blog-title">MLflow + Kubernetes: MLOps Pipeline từ A đến Z</div>
+      <div class="blog-title">
+        <span class="lang-vi">MLflow + Kubernetes: MLOps Pipeline từ A đến Z</span>
+        <span class="lang-en">MLflow + Kubernetes: End-to-End MLOps Pipeline</span>
+      </div>
       <div class="blog-excerpt">
-        Thiết kế end-to-end ML platform — từ experiment tracking, model registry đến canary deployment và tự động rollback khi drift được phát hiện.
+        <span class="lang-vi">Thiết kế end-to-end ML platform — từ experiment tracking, model registry đến canary deployment và tự động rollback khi drift được phát hiện.</span>
+        <span class="lang-en">Designing an end-to-end ML platform — from experiment tracking and model registry to canary deployment and automated rollback on drift detection.</span>
       </div>
       <div class="blog-meta">
-        <span>Feb 2026</span>
-        <span class="blog-meta-dot"></span>
-        <span>10 min read</span>
+        <span>Feb 2026</span><span class="blog-meta-dot"></span><span>10 min read</span>
       </div>
     </a>
 
     <a href="posts/terraform-multi-cloud.html" class="blog-card fade-up d3">
       <span class="blog-tag tag-iac">IaC</span>
-      <div class="blog-title">Terraform Best Practices cho Multi-cloud Infrastructure</div>
+      <div class="blog-title">
+        <span class="lang-vi">Terraform Best Practices cho Multi-cloud Infrastructure</span>
+        <span class="lang-en">Terraform Best Practices for Multi-cloud Infrastructure</span>
+      </div>
       <div class="blog-excerpt">
-        Module structure, remote state, workspace strategy và cách quản lý secrets an toàn khi dùng Terraform với AWS, Azure và GCP cùng lúc.
+        <span class="lang-vi">Module structure, remote state, workspace strategy và cách quản lý secrets an toàn khi dùng Terraform với AWS, Azure và GCP cùng lúc.</span>
+        <span class="lang-en">Module structure, remote state, workspace strategy and secure secrets management when using Terraform across AWS, Azure, and GCP simultaneously.</span>
       </div>
       <div class="blog-meta">
-        <span>Jan 2026</span>
-        <span class="blog-meta-dot"></span>
-        <span>7 min read</span>
+        <span>Jan 2026</span><span class="blog-meta-dot"></span><span>7 min read</span>
       </div>
     </a>
 
     <a href="posts/devsecops-shift-left.html" class="blog-card fade-up d4">
       <span class="blog-tag tag-sec">Security</span>
-      <div class="blog-title">Shift-left Security: Tích hợp bảo mật vào CI/CD Pipeline</div>
+      <div class="blog-title">
+        <span class="lang-vi">Shift-left Security: Tích hợp bảo mật vào CI/CD Pipeline</span>
+        <span class="lang-en">Shift-left Security: Integrating Security into CI/CD Pipelines</span>
+      </div>
       <div class="blog-excerpt">
-        Trivy, SonarQube, OPA và Cosign — xây dựng security gate tự động để block image có CVE trước khi vào production, không cần review thủ công.
+        <span class="lang-vi">Trivy, SonarQube, OPA và Cosign — xây dựng security gate tự động để block image có CVE trước khi vào production, không cần review thủ công.</span>
+        <span class="lang-en">Trivy, SonarQube, OPA and Cosign — building automated security gates that block CVE-laden images before production, no manual review required.</span>
       </div>
       <div class="blog-meta">
-        <span>Dec 2025</span>
-        <span class="blog-meta-dot"></span>
-        <span>9 min read</span>
+        <span>Dec 2025</span><span class="blog-meta-dot"></span><span>9 min read</span>
       </div>
     </a>
 
     <a href="posts/gitops-argocd.html" class="blog-card fade-up d5">
       <span class="blog-tag tag-devops">DevOps</span>
-      <div class="blog-title">GitOps với ArgoCD: Deploy Kubernetes không còn lo sợ</div>
+      <div class="blog-title">
+        <span class="lang-vi">GitOps với ArgoCD: Deploy Kubernetes không còn lo sợ</span>
+        <span class="lang-en">GitOps with ArgoCD: Fearless Kubernetes Deployments</span>
+      </div>
       <div class="blog-excerpt">
-        Từ imperative kubectl apply đến declarative GitOps — cách setup ArgoCD App of Apps pattern, sync policies và automated rollback trên production cluster.
+        <span class="lang-vi">Từ imperative kubectl apply đến declarative GitOps — cách setup ArgoCD App of Apps pattern, sync policies và automated rollback trên production cluster.</span>
+        <span class="lang-en">From imperative kubectl apply to declarative GitOps — setting up ArgoCD App of Apps pattern, sync policies, and automated rollback on production clusters.</span>
       </div>
       <div class="blog-meta">
-        <span>Nov 2025</span>
-        <span class="blog-meta-dot"></span>
-        <span>8 min read</span>
+        <span>Nov 2025</span><span class="blog-meta-dot"></span><span>8 min read</span>
       </div>
     </a>
 
@@ -116,17 +136,32 @@
 
 <footer>
   <span>© 2026 Tu Doan Minh</span>
-  <span><a href="../" style="color:inherit;opacity:.6;">← Back to Portfolio</a></span>
+  <span><a href="../" style="color:inherit;opacity:.6;">← <span data-vi="Về trang chủ" data-en="Back to Portfolio">Về trang chủ</span></a></span>
 </footer>
 
 <script>
 (function () {
-  const obs = new IntersectionObserver(function (entries) {
+  var obs = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
     });
   }, { threshold: 0.1 });
   document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
+
+  var ham = document.getElementById('hamburger');
+  var nav = document.getElementById('nav-links');
+  ham.addEventListener('click', function () {
+    var open = nav.classList.toggle('open');
+    ham.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
+  nav.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () {
+      nav.classList.remove('open');
+      ham.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    });
+  });
 }());
 </script>
 

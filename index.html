@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/custom.css">
   <link rel="icon" href="assets/img/cloud-icon-8.png">
+  <script src="js/i18n.js"></script>
 </head>
 <body>
 
@@ -24,9 +25,12 @@
     <li><a href="#blog">Blog</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
-  <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
-    <span></span><span></span><span></span>
-  </button>
+  <div class="nav-right">
+    <button class="lang-toggle" id="lang-toggle" data-cur="vi" aria-label="Switch language"><span class="ltl">EN</span></button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </nav>
 
 <!-- ═══════════════════════════════════════════════════
@@ -49,10 +53,10 @@
       <span class="typewriter" id="tw"></span><span class="cursor"></span>
     </div>
 
-    <p class="hero-desc">
-      Tôi giúp các team xây dựng hệ thống AI và cloud infrastructure
-      đủ vững để scale, đủ đơn giản để maintain lâu dài —
-      từ Nha Trang, Việt Nam.
+    <p class="hero-desc"
+       data-vi="Tôi giúp các team xây dựng hệ thống AI và cloud infrastructure đủ vững để scale, đủ đơn giản để maintain lâu dài — từ Nha Trang, Việt Nam."
+       data-en="I help teams build AI and cloud infrastructure that's robust enough to scale, and simple enough to last — based in Nha Trang, Vietnam.">
+      Tôi giúp các team xây dựng hệ thống AI và cloud infrastructure đủ vững để scale, đủ đơn giản để maintain lâu dài — từ Nha Trang, Việt Nam.
     </p>
 
     <div class="hero-cta">
@@ -63,19 +67,19 @@
     <div class="hero-stats">
       <div>
         <span class="stat-num">6+</span>
-        <span class="stat-label">Years Cloud</span>
+        <span class="stat-label" data-vi="Năm kinh nghiệm Cloud" data-en="Years Cloud">Năm kinh nghiệm Cloud</span>
       </div>
       <div>
         <span class="stat-num">2+</span>
-        <span class="stat-label">Years AI / MLOps</span>
+        <span class="stat-label" data-vi="Năm kinh nghiệm AI" data-en="Years AI / MLOps">Năm kinh nghiệm AI</span>
       </div>
       <div>
         <span class="stat-num">3</span>
-        <span class="stat-label">Cloud Platforms</span>
+        <span class="stat-label" data-vi="Nền tảng Cloud" data-en="Cloud Platforms">Nền tảng Cloud</span>
       </div>
       <div>
         <span class="stat-num">50+</span>
-        <span class="stat-label">Projects Delivered</span>
+        <span class="stat-label" data-vi="Dự án đã thực hiện" data-en="Projects Delivered">Dự án đã thực hiện</span>
       </div>
     </div>
   </div>
@@ -96,19 +100,32 @@
     <div class="about-grid">
 
       <div class="about-text fade-up">
-        <div class="section-label">About</div>
-        <h2 class="section-title">Chào, tôi là Tu —<br>
+        <div class="section-label" data-vi="Về tôi" data-en="About">Về tôi</div>
+        <h2 class="section-title">
+          <span class="lang-vi">Chào, tôi là Tu —</span>
+          <span class="lang-en">Hey, I'm Tu —</span>
+          <br>
           <span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Cloud &amp; AI Engineer</span>
         </h2>
-        <p class="about-p">
+        <p class="about-p lang-vi">
           Tôi bắt đầu với Linux server năm 2018, rồi bị cuốn vào cloud khi AWS ra Availability Zone tại Singapore.
           6 năm sau, tôi đã deploy infrastructure cho hàng chục sản phẩm — từ startup 5 người đến hệ thống
           phục vụ hàng triệu users.
         </p>
-        <p class="about-p">
+        <p class="about-p lang-vi">
           Từ 2024, tôi tập trung vào AI Engineering — không phải research mà là
           <em>đưa AI vào production thực sự</em>: RAG pipelines, MLOps platforms, LLM integration.
           Kết hợp với nền tảng cloud/DevOps, đây là thứ tôi làm tốt nhất.
+        </p>
+        <p class="about-p lang-en">
+          I started with Linux servers in 2018, then got pulled deep into cloud when AWS launched
+          an Availability Zone in Singapore. Six years later, I've deployed infrastructure for
+          dozens of products — from 5-person startups to systems serving millions of users.
+        </p>
+        <p class="about-p lang-en">
+          Since 2024, I've focused on AI Engineering — not research, but
+          <em>actually shipping AI to production</em>: RAG pipelines, MLOps platforms, LLM integration.
+          Combined with my cloud/DevOps foundation, this is what I do best.
         </p>
         <div class="about-tags">
           <span class="about-tag">📍 Nha Trang, VN</span>
@@ -121,24 +138,24 @@
       <div class="about-cards fade-up d2">
         <div class="about-stat-card">
           <div class="asc-num">6+</div>
-          <div class="asc-label">Năm kinh nghiệm Cloud</div>
+          <div class="asc-label" data-vi="Năm kinh nghiệm Cloud" data-en="Years Cloud Experience">Năm kinh nghiệm Cloud</div>
           <div class="asc-sub">GCP · AWS · Azure</div>
         </div>
         <div class="about-stat-card">
           <div class="asc-num">2+</div>
-          <div class="asc-label">Năm kinh nghiệm AI</div>
+          <div class="asc-label" data-vi="Năm kinh nghiệm AI" data-en="Years AI Experience">Năm kinh nghiệm AI</div>
           <div class="asc-sub">LLMs · MLOps · RAG</div>
         </div>
         <div class="about-stat-card">
           <div class="asc-num">50+</div>
-          <div class="asc-label">Projects đã deliver</div>
-          <div class="asc-sub">Production-grade systems</div>
+          <div class="asc-label" data-vi="Projects đã deliver" data-en="Projects Delivered">Projects đã deliver</div>
+          <div class="asc-sub" data-vi="Hệ thống production-grade" data-en="Production-grade systems">Hệ thống production-grade</div>
         </div>
         <div class="about-avail-card">
           <span class="avail-dot"></span>
           <div>
-            <div style="font-size:.85rem;font-weight:600;color:var(--text)">Open to opportunities</div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem">Consulting · Full-time · Remote</div>
+            <div style="font-size:.85rem;font-weight:600;color:var(--text)" data-vi="Sẵn sàng nhận dự án mới" data-en="Open to opportunities">Sẵn sàng nhận dự án mới</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem" data-vi="Tư vấn · Toàn thời gian · Remote" data-en="Consulting · Full-time · Remote">Tư vấn · Toàn thời gian · Remote</div>
           </div>
         </div>
       </div>
@@ -154,9 +171,10 @@
   <div class="section">
     <div class="section-label fade-up">Expertise</div>
     <h2 class="section-title fade-up d1">What I Do</h2>
-    <p class="section-sub fade-up d2">
-      Two core disciplines — AI leadership and infrastructure engineering —
-      working in harmony to deliver intelligent, reliable systems.
+    <p class="section-sub fade-up d2"
+       data-vi="Hai lĩnh vực cốt lõi — AI leadership và infrastructure engineering — hoạt động song song để deliver intelligent, reliable systems."
+       data-en="Two core disciplines — AI leadership and infrastructure engineering — working in harmony to deliver intelligent, reliable systems.">
+      Hai lĩnh vực cốt lõi — AI leadership và infrastructure engineering — hoạt động song song để deliver intelligent, reliable systems.
     </p>
 
     <div class="cards-2x2">
@@ -343,18 +361,23 @@
     <div style="max-width:1200px;margin:0 auto;">
       <div class="section-label fade-up">Writing</div>
       <h2 class="section-title fade-up d1">Latest Articles</h2>
-      <p class="section-sub fade-up d2">
-        Chia sẻ kinh nghiệm thực chiến về Cloud, AI và DevOps —
-        từ production lessons đến kiến trúc hệ thống.
+      <p class="section-sub fade-up d2"
+         data-vi="Chia sẻ kinh nghiệm thực chiến về Cloud, AI và DevOps — từ production lessons đến kiến trúc hệ thống."
+         data-en="Sharing hands-on experience in Cloud, AI, and DevOps — from production lessons to system architecture.">
+        Chia sẻ kinh nghiệm thực chiến về Cloud, AI và DevOps — từ production lessons đến kiến trúc hệ thống.
       </p>
 
       <div class="blog-grid">
 
         <a href="blog/posts/rag-pipeline-gcp.html" class="blog-card fade-up d2">
           <span class="blog-tag tag-ai">AI</span>
-          <div class="blog-title">RAG Pipeline trên GCP: Bài học từ Production</div>
+          <div class="blog-title">
+            <span class="lang-vi">RAG Pipeline trên GCP: Bài học từ Production</span>
+            <span class="lang-en">RAG Pipeline on GCP: Lessons from Production</span>
+          </div>
           <div class="blog-excerpt">
-            Xây dựng hệ thống Retrieval-Augmented Generation với Vertex AI, Weaviate và LangChain — những sai lầm gặp phải và cách tối ưu latency xuống dưới 800ms.
+            <span class="lang-vi">Xây dựng hệ thống Retrieval-Augmented Generation với Vertex AI, Weaviate và LangChain — những sai lầm gặp phải và cách tối ưu latency xuống dưới 800ms.</span>
+            <span class="lang-en">Building a Retrieval-Augmented Generation system with Vertex AI, Weaviate and LangChain — mistakes made and how we got latency under 800ms.</span>
           </div>
           <div class="blog-meta">
             <span>Apr 2026</span>
@@ -365,9 +388,13 @@
 
         <a href="blog/posts/finops-multi-cloud.html" class="blog-card fade-up d3">
           <span class="blog-tag tag-cloud">Cloud</span>
-          <div class="blog-title">FinOps cho Multi-cloud: Giảm 40% chi phí AWS + GCP</div>
+          <div class="blog-title">
+            <span class="lang-vi">FinOps cho Multi-cloud: Giảm 40% chi phí AWS + GCP</span>
+            <span class="lang-en">Multi-cloud FinOps: 40% Cost Reduction on AWS + GCP</span>
+          </div>
           <div class="blog-excerpt">
-            Chiến lược tối ưu chi phí thực tế — từ right-sizing, reserved instances đến tự động hóa shutdown môi trường dev/staging ngoài giờ làm việc.
+            <span class="lang-vi">Chiến lược tối ưu chi phí thực tế — từ right-sizing, reserved instances đến tự động hóa shutdown môi trường dev/staging ngoài giờ làm việc.</span>
+            <span class="lang-en">Practical cost optimization strategy — from right-sizing and reserved instances to automated shutdown of dev/staging environments off-hours.</span>
           </div>
           <div class="blog-meta">
             <span>Mar 2026</span>
@@ -378,9 +405,13 @@
 
         <a href="blog/posts/mlops-mlflow-k8s.html" class="blog-card fade-up d4">
           <span class="blog-tag tag-mlops">MLOps</span>
-          <div class="blog-title">MLflow + Kubernetes: MLOps Pipeline từ A đến Z</div>
+          <div class="blog-title">
+            <span class="lang-vi">MLflow + Kubernetes: MLOps Pipeline từ A đến Z</span>
+            <span class="lang-en">MLflow + Kubernetes: End-to-End MLOps Pipeline</span>
+          </div>
           <div class="blog-excerpt">
-            Thiết kế end-to-end ML platform — từ experiment tracking, model registry đến canary deployment và tự động rollback khi drift được phát hiện.
+            <span class="lang-vi">Thiết kế end-to-end ML platform — từ experiment tracking, model registry đến canary deployment và tự động rollback khi drift được phát hiện.</span>
+            <span class="lang-en">Designing an end-to-end ML platform — from experiment tracking and model registry to canary deployment and automated rollback on drift detection.</span>
           </div>
           <div class="blog-meta">
             <span>Feb 2026</span>
@@ -392,7 +423,7 @@
       </div>
 
       <div class="blog-view-all fade-up d5">
-        <a href="blog/" class="btn btn-ghost">Xem tất cả bài viết &nbsp;→</a>
+        <a href="blog/" class="btn btn-ghost" data-vi="Xem tất cả bài viết →" data-en="View all articles →">Xem tất cả bài viết →</a>
       </div>
     </div>
   </div>
@@ -452,13 +483,12 @@
       </div>
 
       <div class="contact-cta fade-up d3">
-        <div class="cta-title">Open to Collaboration</div>
+        <div class="cta-title" data-vi="Sẵn sàng hợp tác" data-en="Open to Collaboration">Sẵn sàng hợp tác</div>
         <div class="cta-desc">
-          Whether you're looking to build an AI platform, modernise your cloud infrastructure,
-          or transform your team's DevOps culture — I'd love to connect and explore how we
-          can work together.
+          <span class="lang-vi">Nếu bạn muốn build AI platform, modernize cloud infrastructure, hoặc transform DevOps culture của team — hãy liên hệ để cùng tìm hướng hợp tác.</span>
+          <span class="lang-en">Whether you're looking to build an AI platform, modernise your cloud infrastructure, or transform your team's DevOps culture — I'd love to connect and explore how we can work together.</span>
         </div>
-        <a href="mailto:tudoan.devops@gmail.com" class="btn btn-primary">Send a Message</a>
+        <a href="mailto:tudoan.devops@gmail.com" class="btn btn-primary" data-vi="Gửi tin nhắn" data-en="Send a Message">Gửi tin nhắn</a>
         <div class="social-row">
           <a href="https://github.com/tudoan1987" target="_blank" class="soc-link" title="GitHub">GH</a>
           <a href="https://www.facebook.com/minhtu.doan.9/" target="_blank" class="soc-link" title="Facebook">FB</a>
